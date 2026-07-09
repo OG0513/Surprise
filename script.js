@@ -1,759 +1,234 @@
 /* =====================================================
-   1. ROOT VARIABLES — Design Tokens
-===================================================== */
-:root {
-  /* Color Palette */
-  --color-cream: #fff8f2;
-  --color-peach: #ffd9c9;
-  --color-pink: #ffc2d1;
-  --color-rose: #ff8fab;
-  --color-lavender: #d9c9f5;
-  --color-purple-light: #b98be0;
-  --color-sky: #c9e4ff;
-  --color-gold: #f5c66b;
-  --color-gold-light: #ffe9b8;
-  --color-white: #ffffff;
-  --color-text-dark: #4a3b52;
-  --color-text-soft: #7a6a82;
-
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.35);
-  --glass-border: rgba(255, 255, 255, 0.55);
-  --glass-shadow: rgba(180, 140, 180, 0.25);
-
-  /* Spacing (fluid) */
-  --space-xs: clamp(0.5rem, 1vw, 0.75rem);
-  --space-sm: clamp(0.75rem, 2vw, 1.25rem);
-  --space-md: clamp(1.25rem, 3vw, 2rem);
-  --space-lg: clamp(2rem, 5vw, 3.5rem);
-  --space-xl: clamp(3rem, 8vw, 6rem);
-
-  /* Typography */
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'Poppins', sans-serif;
-
-  /* Motion */
-  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* =====================================================
-   2. RESET & BASE
-===================================================== */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: var(--font-body);
-  color: var(--color-text-dark);
-  background: var(--color-cream);
-  overflow-x: hidden;
-  min-height: 100vh;
-  min-height: 100dvh;
-  line-height: 1.6;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* =====================================================
-   3. BACKGROUND LAYERS
-===================================================== */
-.bg-gradient {
-  position: fixed;
-  inset: 0;
-  z-index: -3;
-  background: linear-gradient(
-    135deg,
-    var(--color-cream) 0%,
-    var(--color-peach) 25%,
-    var(--color-pink) 50%,
-    var(--color-lavender) 75%,
-    var(--color-sky) 100%
-  );
-  background-size: 300% 300%;
-  animation: gradientDrift 18s ease-in-out infinite;
-}
-
-@keyframes gradientDrift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.bg-glow {
-  position: fixed;
-  z-index: -2;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.bg-glow--one {
-  width: clamp(200px, 40vw, 500px);
-  aspect-ratio: 1 / 1;
-  top: -10%;
-  left: -10%;
-  background: radial-gradient(circle, var(--color-gold-light), transparent 70%);
-  animation: floatBlob 14s ease-in-out infinite;
-}
-
-.bg-glow--two {
-  width: clamp(220px, 45vw, 550px);
-  aspect-ratio: 1 / 1;
-  bottom: -15%;
-  right: -10%;
-  background: radial-gradient(circle, var(--color-rose), transparent 70%);
-  opacity: 0.35;
-  animation: floatBlob 16s ease-in-out infinite reverse;
-}
-
-.bg-glow--three {
-  width: clamp(180px, 35vw, 420px);
-  aspect-ratio: 1 / 1;
-  top: 40%;
-  left: 60%;
-  background: radial-gradient(circle, var(--color-purple-light), transparent 70%);
-  opacity: 0.3;
-  animation: floatBlob 20s ease-in-out infinite;
-}
-
-@keyframes floatBlob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(3%, -4%) scale(1.08); }
-}
-
-/* =====================================================
-   4. FLOATING PARTICLES (JS-injected sparkles)
-===================================================== */
-.particles {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.particle {
-  position: absolute;
-  bottom: -5%;
-  border-radius: 50%;
-  background: var(--color-white);
-  opacity: 0.7;
-  animation: particleRise linear infinite;
-}
-
-@keyframes particleRise {
-  0% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0;
-  }
-  10% { opacity: 0.8; }
-  90% { opacity: 0.5; }
-  100% {
-    transform: translateY(-110vh) translateX(var(--drift, 20px)) scale(0.6);
-    opacity: 0;
-  }
-}
-
-/* =====================================================
-   5. LANDING LAYOUT
-===================================================== */
-.landing {
-  position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-md);
-}
-
-.floaters {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.floater {
-  position: absolute;
-  font-size: clamp(1.2rem, 3vw, 2.2rem);
-  opacity: 0.85;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.08));
-  animation: floatDrift 8s ease-in-out infinite;
-}
-
-.floater--star { color: var(--color-gold); }
-
-.f1 { top: 12%; left: 8%; animation-duration: 7s; }
-.f2 { top: 20%; right: 10%; animation-duration: 9s; animation-delay: 0.5s; }
-.f3 { bottom: 15%; left: 6%; animation-duration: 10s; animation-delay: 1s; }
-.f4 { top: 65%; right: 8%; animation-duration: 8.5s; animation-delay: 1.5s; }
-.f5 { top: 8%; left: 45%; animation-duration: 6s; animation-delay: 0.2s; }
-.f6 { bottom: 25%; right: 20%; animation-duration: 7.5s; animation-delay: 0.8s; }
-.f7 { bottom: 10%; left: 25%; animation-duration: 9.5s; animation-delay: 1.2s; }
-.f8 { top: 30%; right: 25%; animation-duration: 8s; animation-delay: 0.4s; }
-
-@keyframes floatDrift {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-18px) rotate(6deg); }
-}
-
-/* =====================================================
-   6. HERO CONTENT (Glassmorphism Card)
-===================================================== */
-.hero {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 640px);
-  text-align: center;
-  padding: var(--space-lg) var(--space-md);
-  border-radius: clamp(24px, 4vw, 40px);
-
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 20px 60px var(--glass-shadow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-
-  animation: heroEnter 1.1s var(--ease-smooth) both;
-}
-
-@keyframes heroEnter {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.hero__eyebrow {
-  font-size: clamp(0.75rem, 1.8vw, 0.95rem);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-rose);
-  font-weight: 500;
-  margin-bottom: var(--space-sm);
-  opacity: 0;
-  animation: fadeUp 0.8s var(--ease-smooth) 0.3s forwards;
-}
-
-.hero__title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--color-text-dark);
-  margin-bottom: var(--space-sm);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.15rem, 1vw, 0.4rem);
-}
-
-.hero__title-line {
-  font-size: clamp(1.8rem, 6vw, 3.4rem);
-  opacity: 0;
-  animation: fadeUp 0.9s var(--ease-smooth) 0.5s forwards;
-}
-
-.hero__title-name {
-  font-size: clamp(2.2rem, 8vw, 4.4rem);
-  font-weight: 800;
-  background: linear-gradient(
-    90deg,
-    var(--color-rose),
-    var(--color-gold),
-    var(--color-purple-light),
-    var(--color-rose)
-  );
-  background-size: 300% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation:
-    fadeUp 0.9s var(--ease-smooth) 0.7s forwards,
-    shimmer 6s linear infinite 1.6s;
-  opacity: 0;
-}
-
-@keyframes shimmer {
-  to { background-position: -300% center; }
-}
-
-.hero__subtitle {
-  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
-  color: var(--color-text-soft);
-  max-width: 46ch;
-  margin: 0 auto var(--space-lg);
-  opacity: 0;
-  animation: fadeUp 0.9s var(--ease-smooth) 0.9s forwards;
-}
-
-@keyframes fadeUp {
-  0% {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =====================================================
-   7. START CELEBRATION BUTTON
-===================================================== */
-.start-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: 999px;
-  overflow: hidden;
-  isolation: isolate;
-
-  background: linear-gradient(135deg, var(--color-rose), var(--color-purple-light));
-  box-shadow:
-    0 10px 30px rgba(255, 143, 171, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
-
-  opacity: 0;
-  animation: fadeUp 0.9s var(--ease-smooth) 1.1s forwards, pulseGlow 3s ease-in-out infinite 2s;
-  transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s var(--ease-smooth);
-}
-
-.start-btn:hover,
-.start-btn:focus-visible {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow:
-    0 16px 40px rgba(255, 143, 171, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-}
-
-.start-btn:active {
-  transform: translateY(-1px) scale(0.98);
-}
-
-.start-btn:focus-visible {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 3px;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 10px 30px rgba(255, 143, 171, 0.4), 0 0 0 1px rgba(255,255,255,0.4) inset; }
-  50% { box-shadow: 0 14px 44px rgba(255, 143, 171, 0.65), 0 0 0 1px rgba(255,255,255,0.6) inset; }
-}
-
-.start-btn__glow {
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent,
-    rgba(255, 255, 255, 0.5),
-    transparent 30%
-  );
-  animation: rotateGlow 4s linear infinite;
-  z-index: -1;
-}
-
-@keyframes rotateGlow {
-  to { transform: rotate(360deg); }
-}
-
-.start-btn__text {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  color: var(--color-white);
-  font-weight: 600;
-  font-size: clamp(1rem, 2.4vw, 1.15rem);
-  letter-spacing: 0.02em;
-}
-
-.start-btn__icon {
-  display: inline-block;
-  animation: iconWiggle 2.4s ease-in-out infinite;
-}
-
-@keyframes iconWiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-12deg); }
-  75% { transform: rotate(12deg); }
-}
-
-.hero__hint {
-  margin-top: var(--space-sm);
-  font-size: clamp(0.75rem, 1.8vw, 0.85rem);
-  color: var(--color-text-soft);
-  opacity: 0;
-  animation: fadeUp 0.9s var(--ease-smooth) 1.3s forwards;
-}
-
-/* =====================================================
-   8. EXPERIENCE SCREEN — Show/Hide + Layout Shell
-===================================================== */
-.experience {
-  display: none;
-  position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
-  width: 100%;
-}
-
-.experience.is-active {
-  display: block;
-}
-
-.landing.is-hidden {
-  display: none;
-}
-
-.experience__inner {
-  position: relative;
-  width: 100%;
-  max-width: 1100px; /* caps line-length on ultrawide; everything inside stays fluid */
-  margin-inline: auto;
-  padding: var(--space-xl) var(--space-md) var(--space-lg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-lg);
-}
-
-/* Reuses the same emoji-drift decoration system as the landing screen */
-.floaters--experience .ef1 { top: 6%; left: 10%; animation-duration: 8s; }
-.floaters--experience .ef2 { top: 14%; right: 8%; animation-duration: 7s; animation-delay: 0.6s; }
-.floaters--experience .ef3 { bottom: 12%; left: 8%; animation-duration: 9s; animation-delay: 1s; }
-.floaters--experience .ef4 { bottom: 20%; right: 12%; animation-duration: 7.5s; animation-delay: 0.3s; }
-
-.experience__intro {
-  text-align: center;
-  max-width: 60ch;
-  position: relative;
-  z-index: 1; /* paints above the decorative floaters layer */
-}
-
-.experience__eyebrow {
-  font-size: clamp(0.75rem, 1.8vw, 0.95rem);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-rose);
-  font-weight: 500;
-  margin-bottom: var(--space-xs);
-}
-
-.experience__heading {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.6rem, 5vw, 2.6rem);
-  color: var(--color-text-dark);
-  margin-bottom: var(--space-xs);
-}
-
-.experience__lead {
-  font-size: clamp(0.9rem, 2.2vw, 1.05rem);
-  color: var(--color-text-soft);
-}
-
-.scene {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.scene__hint {
-  margin-top: var(--space-sm);
-  font-size: clamp(0.8rem, 1.8vw, 0.9rem);
-  color: var(--color-text-soft);
-  min-height: 1.4em; /* reserves space so the hint text swap never shifts layout */
-}
-
-/* =====================================================
-   9. BIRTHDAY CARD (Interactive Object)
-   -----------------------------------------------------
-   ABSOLUTE POSITIONING NOTE: .greeting-card__cover and
-   .greeting-card__close are the two absolutely-positioned
-   pieces here. Both are internal mechanics of ONE self-
-   contained component, not page content:
-     - .greeting-card__cover is aria-hidden and carries no
-       unique text (its content duplicates the button's
-       aria-label). It's the "front of card" visual layer
-       that must sit on top of the message to animate open —
-       exactly like .bg-glow / .particle already do for
-       decoration elsewhere in this file.
-     - .greeting-card__inside (the real message) stays in
-       normal document flow at all times, at full size,
-       readable by assistive tech whether the card looks
-       open or closed.
-===================================================== */
-.scene--card {
-  gap: var(--space-sm);
-  padding-block: var(--space-md);
-}
-
-.greeting-card {
-  position: relative;
-  width: min(100%, 400px);
-  aspect-ratio: 3 / 4;
-  perspective: 1800px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.greeting-card.is-open {
-  cursor: default;
-}
-
-.greeting-card:focus-visible {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 6px;
-  border-radius: clamp(16px, 3vw, 24px);
-}
-
-/* INSIDE — always in flow; the accessible, permanent content */
-.greeting-card__inside {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: clamp(16px, 3vw, 24px);
-  background: linear-gradient(160deg, #fffdf9, var(--color-cream));
-  border: 1px solid rgba(245, 198, 107, 0.35);
-  box-shadow: 0 20px 50px var(--glass-shadow);
-  padding: var(--space-lg) var(--space-md) var(--space-md);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-  overflow: hidden auto; /* long messages scroll internally instead of clipping */
-}
-
-.greeting-card__message {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
-}
-
-.greeting-card.is-open .greeting-card__message {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.greeting-card__greeting {
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 3.5vw, 1.6rem);
-  font-weight: 600;
-  color: var(--color-rose);
-}
-
-.greeting-card__body {
-  font-size: clamp(0.9rem, 2.2vw, 1.05rem);
-  color: var(--color-text-dark);
-  line-height: 1.8;
-}
-
-.greeting-card__signature {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: clamp(1rem, 2.6vw, 1.2rem);
-  color: var(--color-purple-light);
-  margin-top: var(--space-xs);
-}
-
-.greeting-card__close {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 44px;  /* meets the 44px minimum touch target */
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 1rem;
-  color: var(--color-text-soft);
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease 0.3s, background 0.25s ease, color 0.25s ease;
-}
-
-.greeting-card.is-open .greeting-card__close {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.greeting-card__close:hover,
-.greeting-card__close:focus-visible {
-  background: var(--color-rose);
-  color: var(--color-white);
-}
-
-/* COVER — decorative "front of card" overlay; see note above */
-.greeting-card__cover {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  border-radius: clamp(16px, 3vw, 24px);
-  transform-origin: left center;
-  backface-visibility: hidden;
-  background: linear-gradient(160deg, var(--color-pink), var(--color-rose) 60%, var(--color-purple-light));
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 20px 50px rgba(180, 140, 180, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  transition: transform 1.1s var(--ease-smooth);
-}
-
-.greeting-card__cover::before {
-  /* soft diagonal ribbon of light across the cover */
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, transparent 46%, rgba(255, 255, 255, 0.5) 50%, transparent 54%);
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.greeting-card__seal {
-  font-size: clamp(2.2rem, 8vw, 3.2rem);
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.15));
-  animation: sealBob 3.5s ease-in-out infinite;
-}
-
-@keyframes sealBob {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(-4deg); }
-}
-
-.greeting-card__cover-title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.3rem, 4.5vw, 1.9rem);
-  color: var(--color-white);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.greeting-card__cover-hint {
-  font-size: clamp(0.75rem, 2vw, 0.85rem);
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.05em;
-  animation: hintPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes hintPulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-/* Gentle "peek" on hover/focus before opening, invites the tap */
-.greeting-card:not(.is-open):hover .greeting-card__cover,
-.greeting-card:not(.is-open):focus-visible .greeting-card__cover {
-  transform: rotateY(-8deg) scale(1.02);
-}
-
-/* OPEN STATE — cover swings open like a book cover */
-.greeting-card.is-open .greeting-card__cover {
-  transform: rotateY(-150deg);
-  box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-/* =====================================================
-   10. RESPONSIVE BREAKPOINTS
+   BIRTHDAY WEBSITE — MAIN SCRIPT
+   Version 2: + Interactive Birthday Card
 ===================================================== */
 
-/* Small phones (320px–359px): tighten padding further */
-@media (max-width: 359px) {
-  .hero {
-    padding: var(--space-md) var(--space-sm);
-    border-radius: 20px;
+'use strict';
+
+/* -----------------------------------------------------
+   1. CONFIG — Personalize the celebration here
+   Organized per-feature so it stays easy to scan as more
+   interactive objects (gifts, cake, gallery...) are added.
+----------------------------------------------------- */
+const CONFIG = {
+  name: 'Beautiful',
+  subtitle: "Today the world gets a little brighter — because it's your day. 🎂",
+  particleCount: 22, // scales down automatically on small screens, see initParticles()
+
+  card: {
+    message:
+      "Wishing you a day filled with warm light, soft laughter, and every " +
+      "little thing that makes you smile. May this new year of your life " +
+      "be as radiant and wonderful as you are.",
+    signature: 'With all my love 💛',
+  },
+};
+
+/* -----------------------------------------------------
+   2. DOM REFERENCES
+----------------------------------------------------- */
+const dom = {
+  landing: document.getElementById('landing'),
+  experience: document.getElementById('experience'),
+  startBtn: document.getElementById('startBtn'),
+  nameEl: document.getElementById('birthdayName'),
+  subtitleEl: document.getElementById('birthdaySubtitle'),
+  particlesContainer: document.getElementById('particles'),
+
+  // Version 2 — Birthday Card
+  experienceNameEl: document.getElementById('experienceName'),
+  greetingCard: document.getElementById('greetingCard'),
+  cardNameEl: document.getElementById('cardName'),
+  cardMessageEl: document.getElementById('cardMessage'),
+  cardSignatureEl: document.getElementById('cardSignature'),
+  closeCardBtn: document.getElementById('closeCardBtn'),
+  cardStatusHint: document.getElementById('cardStatusHint'),
+};
+
+/* -----------------------------------------------------
+   3. PERSONALIZATION
+   Applies CONFIG values into the DOM on load.
+----------------------------------------------------- */
+function applyPersonalization() {
+  if (dom.nameEl) dom.nameEl.textContent = CONFIG.name;
+  if (dom.subtitleEl) dom.subtitleEl.textContent = CONFIG.subtitle;
+
+  // Version 2 — Birthday Card personalization
+  if (dom.experienceNameEl) dom.experienceNameEl.textContent = CONFIG.name;
+  if (dom.cardNameEl) dom.cardNameEl.textContent = CONFIG.name;
+  if (dom.cardMessageEl) dom.cardMessageEl.textContent = CONFIG.card.message;
+  if (dom.cardSignatureEl) dom.cardSignatureEl.textContent = CONFIG.card.signature;
+}
+
+/* -----------------------------------------------------
+   4. FLOATING PARTICLES
+   Lightweight CSS-driven particles injected via JS.
+   Uses randomized size/position/duration for organic feel.
+   Automatically reduces count on small screens for performance,
+   and skips entirely if the user prefers reduced motion.
+----------------------------------------------------- */
+function initParticles() {
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+
+  if (prefersReducedMotion || !dom.particlesContainer) return;
+
+  const isSmallScreen = window.innerWidth < 480;
+  const count = isSmallScreen
+    ? Math.round(CONFIG.particleCount * 0.5)
+    : CONFIG.particleCount;
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement('span');
+    particle.className = 'particle';
+
+    const size = Math.random() * 6 + 3;
+    const left = Math.random() * 100;
+    const duration = Math.random() * 10 + 10;
+    const delay = Math.random() * 12;
+    const drift = Math.random() * 80 - 40;
+
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${left}%`;
+    particle.style.animationDuration = `${duration}s`;
+    particle.style.animationDelay = `${delay}s`;
+    particle.style.setProperty('--drift', `${drift}px`);
+
+    fragment.appendChild(particle);
   }
 
-  .greeting-card__inside {
-    padding: var(--space-md) var(--space-sm) var(--space-sm);
+  dom.particlesContainer.appendChild(fragment);
+}
+
+/* -----------------------------------------------------
+   5. START CELEBRATION TRANSITION
+   Smoothly transitions from landing screen to the
+   interactive experience screen without a page reload.
+----------------------------------------------------- */
+function startCelebration() {
+  if (!dom.landing || !dom.experience) return;
+
+  dom.landing.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+  dom.landing.style.opacity = '0';
+  dom.landing.style.transform = 'scale(0.98)';
+
+  window.setTimeout(() => {
+    dom.landing.classList.add('is-hidden');
+    dom.experience.classList.add('is-active');
+    dom.experience.setAttribute('aria-hidden', 'false');
+
+    dom.experience.setAttribute('tabindex', '-1');
+    dom.experience.focus({ preventScroll: true });
+
+    console.log('🎉 Celebration started!');
+  }, 600);
+}
+
+/* -----------------------------------------------------
+   6. BIRTHDAY CARD — Open/Close Interaction
+   Self-contained module: owns its own DOM state and event
+   listeners. Every future interactive object (gift, cake,
+   flower...) will follow this same "initXxx()" pattern so
+   features never tangle with one another.
+
+   All motion is CSS-driven (see style.css §9); this function
+   only ever toggles a single ".is-open" class plus the ARIA
+   attributes that describe it.
+----------------------------------------------------- */
+function initBirthdayCard() {
+  const card = dom.greetingCard;
+  const closeBtn = dom.closeCardBtn;
+  if (!card) return;
+
+  function setCardOpen(isOpen) {
+    card.classList.toggle('is-open', isOpen);
+
+    // aria-pressed models this as a toggle button (open/closed state),
+    // rather than aria-expanded, since the message is already present
+    // in the accessibility tree in both states — nothing is being
+    // shown/hidden from assistive tech, only animated for sighted users.
+    card.setAttribute('aria-pressed', String(isOpen));
+    card.setAttribute(
+      'aria-label',
+      isOpen
+        ? 'Birthday card, open. Press the close button to close it.'
+        : 'Birthday card, closed. Press to open and read your message.'
+    );
+
+    if (dom.cardStatusHint) {
+      dom.cardStatusHint.textContent = isOpen
+        ? 'tap the ✕ to close the card'
+        : 'tap the card to open it';
+    }
+
+    // Only let the close button take keyboard focus once it's visible/usable
+    if (closeBtn) {
+      if (isOpen) {
+        closeBtn.removeAttribute('tabindex');
+      } else {
+        closeBtn.setAttribute('tabindex', '-1');
+      }
+    }
+  }
+
+  // Clicking/tapping the card only ever OPENS it.
+  card.addEventListener('click', () => {
+    if (!card.classList.contains('is-open')) {
+      setCardOpen(true);
+    }
+  });
+
+  // Keyboard: Enter / Space opens it, same rule as the click above
+  card.addEventListener('keydown', (event) => {
+    const isActivationKey = event.key === 'Enter' || event.key === ' ';
+    if (isActivationKey && !card.classList.contains('is-open')) {
+      event.preventDefault(); // stop the page from scrolling on Space
+      setCardOpen(true);
+    }
+  });
+
+  // Closing is handled ONLY by the dedicated close button, so tapping
+  // the message text or signature never accidentally closes the card.
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (event) => {
+      event.stopPropagation(); // don't let this bubble up and re-open
+      setCardOpen(false);
+    });
+  }
+
+  // Ensure everything starts in a clean, synchronized closed state
+  setCardOpen(false);
+}
+
+/* -----------------------------------------------------
+   7. EVENT LISTENERS
+   Page-level / global events only. Feature-specific
+   interactions live inside their own initXxx() function.
+----------------------------------------------------- */
+function bindEvents() {
+  if (dom.startBtn) {
+    dom.startBtn.addEventListener('click', startCelebration);
+
+    dom.startBtn.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        startCelebration();
+      }
+    });
   }
 }
 
-/* Tablets and up: allow hero a bit more breathing room */
-@media (min-width: 768px) {
-  .hero {
-    padding: var(--space-xl) var(--space-lg);
-  }
+/* -----------------------------------------------------
+   8. INIT — Runs once DOM is ready
+----------------------------------------------------- */
+function init() {
+  applyPersonalization();
+  initParticles();
+  bindEvents();
+  initBirthdayCard(); // Version 2
 }
 
-/* Laptops/Desktops: cap hero width so it never feels stretched */
-@media (min-width: 1200px) {
-  .hero {
-    width: min(100%, 720px);
-  }
-}
-
-/* Ultrawide monitors: prevent content from feeling lost in empty space */
-@media (min-width: 1920px) {
-  .landing {
-    max-width: 1920px;
-    margin-inline: auto;
-  }
-}
-
-/* Landscape phones with limited height: reduce vertical spacing
-   and shrink the card so its 3:4 aspect ratio still fits on screen */
-@media (max-height: 500px) and (orientation: landscape) {
-  .hero {
-    padding: var(--space-sm) var(--space-md);
-  }
-  .hero__subtitle {
-    margin-bottom: var(--space-md);
-  }
-  .greeting-card {
-    width: min(60%, 280px);
-  }
-}    
+document.addEventListener('DOMContentLoaded', init);
