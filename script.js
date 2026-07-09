@@ -1,14 +1,12 @@
 /* =====================================================
    BIRTHDAY WEBSITE — MAIN SCRIPT
-   Version 2: + Interactive Birthday Card
+   Version 3: + Gift Boxes + Reusable Confetti Utility
 ===================================================== */
 
 'use strict';
 
 /* -----------------------------------------------------
    1. CONFIG — Personalize the celebration here
-   Organized per-feature so it stays easy to scan as more
-   interactive objects (gifts, cake, gallery...) are added.
 ----------------------------------------------------- */
 const CONFIG = {
   name: 'Beautiful',
@@ -22,6 +20,10 @@ const CONFIG = {
       "be as radiant and wonderful as you are.",
     signature: 'With all my love 💛',
   },
+
+  // Version 3 — Gift Boxes. Order matches the boxes left-to-right in HTML;
+  // add/remove objects here to add/remove boxes without touching markup logic.
+  confettiPiecesPerBurst: 40,
 };
 
 /* -----------------------------------------------------
@@ -35,7 +37,6 @@ const dom = {
   subtitleEl: document.getElementById('birthdaySubtitle'),
   particlesContainer: document.getElementById('particles'),
 
-  // Version 2 — Birthday Card
   experienceNameEl: document.getElementById('experienceName'),
   greetingCard: document.getElementById('greetingCard'),
   cardNameEl: document.getElementById('cardName'),
@@ -43,17 +44,19 @@ const dom = {
   cardSignatureEl: document.getElementById('cardSignature'),
   closeCardBtn: document.getElementById('closeCardBtn'),
   cardStatusHint: document.getElementById('cardStatusHint'),
+
+  // Version 3
+  giftRow: document.getElementById('giftRow'),
+  confettiLayer: document.getElementById('confettiLayer'),
 };
 
 /* -----------------------------------------------------
    3. PERSONALIZATION
-   Applies CONFIG values into the DOM on load.
 ----------------------------------------------------- */
 function applyPersonalization() {
   if (dom.nameEl) dom.nameEl.textContent = CONFIG.name;
   if (dom.subtitleEl) dom.subtitleEl.textContent = CONFIG.subtitle;
 
-  // Version 2 — Birthday Card personalization
   if (dom.experienceNameEl) dom.experienceNameEl.textContent = CONFIG.name;
   if (dom.cardNameEl) dom.cardNameEl.textContent = CONFIG.name;
   if (dom.cardMessageEl) dom.cardMessageEl.textContent = CONFIG.card.message;
@@ -62,10 +65,6 @@ function applyPersonalization() {
 
 /* -----------------------------------------------------
    4. FLOATING PARTICLES
-   Lightweight CSS-driven particles injected via JS.
-   Uses randomized size/position/duration for organic feel.
-   Automatically reduces count on small screens for performance,
-   and skips entirely if the user prefers reduced motion.
 ----------------------------------------------------- */
 function initParticles() {
   const prefersReducedMotion = window.matchMedia(
@@ -106,8 +105,6 @@ function initParticles() {
 
 /* -----------------------------------------------------
    5. START CELEBRATION TRANSITION
-   Smoothly transitions from landing screen to the
-   interactive experience screen without a page reload.
 ----------------------------------------------------- */
 function startCelebration() {
   if (!dom.landing || !dom.experience) return;
@@ -130,14 +127,6 @@ function startCelebration() {
 
 /* -----------------------------------------------------
    6. BIRTHDAY CARD — Open/Close Interaction
-   Self-contained module: owns its own DOM state and event
-   listeners. Every future interactive object (gift, cake,
-   flower...) will follow this same "initXxx()" pattern so
-   features never tangle with one another.
-
-   All motion is CSS-driven (see style.css §9); this function
-   only ever toggles a single ".is-open" class plus the ARIA
-   attributes that describe it.
 ----------------------------------------------------- */
 function initBirthdayCard() {
   const card = dom.greetingCard;
@@ -146,11 +135,6 @@ function initBirthdayCard() {
 
   function setCardOpen(isOpen) {
     card.classList.toggle('is-open', isOpen);
-
-    // aria-pressed models this as a toggle button (open/closed state),
-    // rather than aria-expanded, since the message is already present
-    // in the accessibility tree in both states — nothing is being
-    // shown/hidden from assistive tech, only animated for sighted users.
     card.setAttribute('aria-pressed', String(isOpen));
     card.setAttribute(
       'aria-label',
@@ -165,7 +149,6 @@ function initBirthdayCard() {
         : 'tap the card to open it';
     }
 
-    // Only let the close button take keyboard focus once it's visible/usable
     if (closeBtn) {
       if (isOpen) {
         closeBtn.removeAttribute('tabindex');
@@ -175,39 +158,145 @@ function initBirthdayCard() {
     }
   }
 
-  // Clicking/tapping the card only ever OPENS it.
   card.addEventListener('click', () => {
     if (!card.classList.contains('is-open')) {
       setCardOpen(true);
     }
   });
 
-  // Keyboard: Enter / Space opens it, same rule as the click above
   card.addEventListener('keydown', (event) => {
     const isActivationKey = event.key === 'Enter' || event.key === ' ';
     if (isActivationKey && !card.classList.contains('is-open')) {
-      event.preventDefault(); // stop the page from scrolling on Space
+      event.preventDefault();
       setCardOpen(true);
     }
   });
 
-  // Closing is handled ONLY by the dedicated close button, so tapping
-  // the message text or signature never accidentally closes the card.
   if (closeBtn) {
     closeBtn.addEventListener('click', (event) => {
-      event.stopPropagation(); // don't let this bubble up and re-open
+      event.stopPropagation();
       setCardOpen(false);
     });
   }
 
-  // Ensure everything starts in a clean, synchronized closed state
   setCardOpen(false);
 }
 
 /* -----------------------------------------------------
-   7. EVENT LISTENERS
-   Page-level / global events only. Feature-specific
-   interactions live inside their own initXxx() function.
+   7. CONFETTI BURST — Reusable Celebration Utility
+   -----------------------------------------------------
+   Spawns short-lived colored rectangles that fall from
+   near the top of the viewport. Every future "reveal"
+   moment (cake lighting, final celebration screen, etc.)
+   should call triggerConfetti() rather than reimplementing
+   this — keeps the effect visually consistent and the
+   codebase free of duplicate particle logic.
+
+   Pieces remove themselves from the DOM once their fall
+   animation ends, so bursts never accumulate in memory.
+----------------------------------------------------- */
+const CONFETTI_COLORS = ['#ff8fab', '#f5c66b', '#b98be0', '#c9e4ff', '#ffc2d1'];
+
+function triggerConfetti(originXPercent = 50) {
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+
+  // Reduced-motion users still get the *event* (message reveal etc.),
+  // just without the extra confetti animation layered on top.
+  if (prefersReducedMotion || !dom.confettiLayer) return;
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < CONFIG.confettiPiecesPerBurst; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+
+    const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    // Spread horizontally around the trigger point, clamped to stay on-screen
+    const left = Math.min(100, Math.max(0, originXPercent + (Math.random() * 40 - 20)));
+    const duration = Math.random() * 1.5 + 2; // 2s–3.5s fall time
+    const delay = Math.random() * 0.3;
+    const drift = Math.random() * 160 - 80; // -80px to 80px horizontal drift while falling
+    const spin = Math.random() * 720 - 360; // varied rotation direction/amount
+    const size = Math.random() * 4 + 6; // 6px–10px
+
+    piece.style.left = `${left}%`;
+    piece.style.background = color;
+    piece.style.width = `${size}px`;
+    piece.style.height = `${size * 1.6}px`;
+    piece.style.animationDuration = `${duration}s`;
+    piece.style.animationDelay = `${delay}s`;
+    piece.style.setProperty('--confetti-drift', `${drift}px`);
+    piece.style.setProperty('--confetti-spin', `${spin}deg`);
+
+    // Self-cleanup: remove the piece once its own fall animation finishes,
+    // so the confetti layer never accumulates stale nodes across bursts.
+    const totalLifetime = (duration + delay) * 1000 + 100;
+    window.setTimeout(() => piece.remove(), totalLifetime);
+
+    fragment.appendChild(piece);
+  }
+
+  dom.confettiLayer.appendChild(fragment);
+}
+
+/* -----------------------------------------------------
+   8. GIFT BOXES — Open Interaction
+   -----------------------------------------------------
+   Each .gift element is independent and self-toggling,
+   following the same open-only-via-tap, ARIA-synced
+   pattern as the birthday card. Opening a gift also
+   fires a confetti burst centered on that gift's
+   position, since a first-time surprise reveal deserves
+   a little extra delight.
+----------------------------------------------------- */
+function initGiftBoxes() {
+  const gifts = document.querySelectorAll('.gift');
+  if (!gifts.length) return;
+
+  gifts.forEach((gift) => {
+    const giftId = gift.dataset.giftId || '';
+
+    function setGiftOpen(isOpen) {
+      gift.classList.toggle('is-open', isOpen);
+      gift.setAttribute('aria-pressed', String(isOpen));
+      gift.setAttribute(
+        'aria-label',
+        isOpen
+          ? `Gift box ${giftId}, open.`
+          : `Gift box ${giftId}, closed. Press to open.`
+      );
+
+      if (isOpen) {
+        // Fire confetti centered on this specific gift's horizontal position,
+        // so the burst feels attached to the object the user just opened.
+        const rect = gift.getBoundingClientRect();
+        const originXPercent = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
+        triggerConfetti(originXPercent);
+      }
+    }
+
+    // Tapping only ever opens — once opened, a gift stays open (it's a keepsake reveal,
+    // not a toggle like the card, so there's no close button to manage here).
+    gift.addEventListener('click', () => {
+      if (!gift.classList.contains('is-open')) {
+        setGiftOpen(true);
+      }
+    });
+
+    gift.addEventListener('keydown', (event) => {
+      const isActivationKey = event.key === 'Enter' || event.key === ' ';
+      if (isActivationKey && !gift.classList.contains('is-open')) {
+        event.preventDefault();
+        setGiftOpen(true);
+      }
+    });
+  });
+}
+
+/* -----------------------------------------------------
+   9. EVENT LISTENERS
 ----------------------------------------------------- */
 function bindEvents() {
   if (dom.startBtn) {
@@ -222,13 +311,14 @@ function bindEvents() {
 }
 
 /* -----------------------------------------------------
-   8. INIT — Runs once DOM is ready
+   10. INIT — Runs once DOM is ready
 ----------------------------------------------------- */
 function init() {
   applyPersonalization();
   initParticles();
   bindEvents();
-  initBirthdayCard(); // Version 2
+  initBirthdayCard();
+  initGiftBoxes(); // Version 3
 }
 
 document.addEventListener('DOMContentLoaded', init);
