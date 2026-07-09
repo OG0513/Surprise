@@ -6,7 +6,6 @@
   <title>Happy Birthday ✨ | A Magical Celebration</title>
   <meta name="description" content="A magical, personalized birthday celebration experience." />
 
-  <!-- Google Fonts: Elegant display + clean body font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -18,23 +17,17 @@
 </head>
 <body>
 
-  <!-- ============================================= -->
-  <!-- BACKGROUND LAYERS (decorative, non-content)    -->
-  <!-- ============================================= -->
   <div class="bg-gradient" aria-hidden="true"></div>
   <div class="bg-glow bg-glow--one" aria-hidden="true"></div>
   <div class="bg-glow bg-glow--two" aria-hidden="true"></div>
   <div class="bg-glow bg-glow--three" aria-hidden="true"></div>
 
-  <!-- Floating decorative particles container (populated by JS) -->
   <div class="particles" id="particles" aria-hidden="true"></div>
 
-  <!-- ============================================= -->
-  <!-- LANDING SCREEN                                 -->
-  <!-- ============================================= -->
-  <main class="landing" id="landing">
+  <!-- Confetti burst layer — reused by every future "reveal" object -->
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
 
-    <!-- Floating decorations around the hero (decorative only) -->
+  <main class="landing" id="landing">
     <div class="floaters" aria-hidden="true">
       <span class="floater floater--star f1">✦</span>
       <span class="floater floater--star f2">✧</span>
@@ -68,20 +61,11 @@
 
       <p class="hero__hint">tap the button to begin ✨</p>
     </section>
-
   </main>
 
-  <!-- ============================================= -->
-  <!-- EXPERIENCE SCREEN                               -->
-  <!-- Revealed after "Start Celebration" is pressed.  -->
-  <!-- Built as a stack of ".scene" blocks so future    -->
-  <!-- versions can append new interactive objects      -->
-  <!-- (gifts, cake, gallery...) without restructuring. -->
-  <!-- ============================================= -->
   <section class="experience" id="experience" aria-hidden="true" aria-labelledby="experienceHeading">
     <div class="experience__inner">
 
-      <!-- Decorative floating elements (non-content) -->
       <div class="floaters floaters--experience" aria-hidden="true">
         <span class="floater floater--star ef1">✦</span>
         <span class="floater floater--sparkle ef2">✨</span>
@@ -111,9 +95,6 @@
           aria-pressed="false"
           aria-label="Birthday card, closed. Press to open and read your message."
         >
-          <!-- INSIDE: the real message. Always in normal document flow
-               and never hidden from assistive tech, regardless of the
-               visual open/closed animation state of the cover above it. -->
           <div class="greeting-card__inside">
             <div class="greeting-card__message">
               <p class="greeting-card__greeting">Dear <span id="cardName">Beautiful</span>,</p>
@@ -136,10 +117,6 @@
             </button>
           </div>
 
-          <!-- COVER: purely decorative overlay implementing the open/close
-               mechanic. See ABSOLUTE POSITIONING note in style.css §9 —
-               this is the one sanctioned exception: an internal, aria-hidden
-               visual layer, not primary content. -->
           <div class="greeting-card__cover" aria-hidden="true">
             <span class="greeting-card__seal">🎂</span>
             <p class="greeting-card__cover-title">Happy Birthday</p>
@@ -150,8 +127,95 @@
         <p class="scene__hint" id="cardStatusHint" aria-live="polite">tap the card to open it</p>
       </div>
 
-      <!-- Future scenes (gift boxes, cake & candles, flowers, gallery, etc.)
-           will be appended here as additional .scene blocks in later versions. -->
+      <!-- ============================================= -->
+      <!-- SCENE: GIFT BOXES                               -->
+      <!-- Each box is a self-contained toggle: closed lid  -->
+      <!-- with ribbon → tap lifts the lid and reveals a    -->
+      <!-- message + prize emoji, sitting in normal flow     -->
+      <!-- underneath (never hidden from assistive tech).   -->
+      <!-- ============================================= -->
+      <div class="scene scene--gifts">
+        <header class="scene__header">
+          <h2 class="scene__title">A Few Surprises For You 🎁</h2>
+          <p class="scene__lead">Tap each box to open it</p>
+        </header>
+
+        <div class="gift-row" id="giftRow">
+
+          <!-- GIFT 1 -->
+          <div
+            class="gift"
+            data-gift-id="1"
+            role="button"
+            tabindex="0"
+            aria-pressed="false"
+            aria-label="Gift box one, closed. Press to open."
+            style="--gift-box: #ff8fab; --gift-lid: #ffc2d1;"
+          >
+            <div class="gift__reveal">
+              <p class="gift__reveal-emoji" aria-hidden="true">🌟</p>
+              <p class="gift__reveal-text">You light up every room you walk into.</p>
+            </div>
+            <div class="gift__box" aria-hidden="true">
+              <div class="gift__lid">
+                <span class="gift__bow">🎀</span>
+              </div>
+              <span class="gift__ribbon gift__ribbon--v"></span>
+              <span class="gift__ribbon gift__ribbon--h"></span>
+            </div>
+          </div>
+
+          <!-- GIFT 2 -->
+          <div
+            class="gift"
+            data-gift-id="2"
+            role="button"
+            tabindex="0"
+            aria-pressed="false"
+            aria-label="Gift box two, closed. Press to open."
+            style="--gift-box: #b98be0; --gift-lid: #d9c9f5;"
+          >
+            <div class="gift__reveal">
+              <p class="gift__reveal-emoji" aria-hidden="true">💫</p>
+              <p class="gift__reveal-text">May this year bring you closer to every dream you're chasing.</p>
+            </div>
+            <div class="gift__box" aria-hidden="true">
+              <div class="gift__lid">
+                <span class="gift__bow">🎀</span>
+              </div>
+              <span class="gift__ribbon gift__ribbon--v"></span>
+              <span class="gift__ribbon gift__ribbon--h"></span>
+            </div>
+          </div>
+
+          <!-- GIFT 3 -->
+          <div
+            class="gift"
+            data-gift-id="3"
+            role="button"
+            tabindex="0"
+            aria-pressed="false"
+            aria-label="Gift box three, closed. Press to open."
+            style="--gift-box: #f5c66b; --gift-lid: #ffe9b8;"
+          >
+            <div class="gift__reveal">
+              <p class="gift__reveal-emoji" aria-hidden="true">🎂</p>
+              <p class="gift__reveal-text">Here's to more laughter, more cake, and more magic ahead.</p>
+            </div>
+            <div class="gift__box" aria-hidden="true">
+              <div class="gift__lid">
+                <span class="gift__bow">🎀</span>
+              </div>
+              <span class="gift__ribbon gift__ribbon--v"></span>
+              <span class="gift__ribbon gift__ribbon--h"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Future scenes (cake & candles, flowers, gallery, etc.)
+           will be appended here as additional .scene blocks. -->
 
     </div>
   </section>
