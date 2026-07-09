@@ -1,6 +1,6 @@
 /* =====================================================
    BIRTHDAY WEBSITE — MAIN SCRIPT
-   Version 4: + Cake & Candles
+   Version 5: + Environment Engine (Wind + Light Foundations)
 ===================================================== */
 
 'use strict';
@@ -11,7 +11,7 @@
 const CONFIG = {
   name: 'Beautiful',
   subtitle: "Today the world gets a little brighter — because it's your day. 🎂",
-  particleCount: 22, // scales down automatically on small screens, see initParticles()
+  particleCount: 22,
 
   card: {
     message:
@@ -21,14 +21,19 @@ const CONFIG = {
     signature: 'With all my love 💛',
   },
 
-  // Version 4 — Cake & Candles
   cake: {
-    candleCount: 5, // Set this to the birthday person's age, or leave as a decorative number
+    candleCount: 5,
     wishPrompt: 'Close your eyes and make a wish… then tap again to blow out the candles.',
     wishGrantedMessage: "Wish sent — here's to a beautiful year ahead! 🎉",
   },
 
-  // Shared / utility settings
+  // Version 5 — Environment System (wind + light)
+  environment: {
+    startMode: 'day', // 'day' | 'night' — which lighting state the site boots into.
+                       // A visible Day/Night button lands in a future version and will
+                       // call toggleLightMode(), already defined below, with no changes here.
+  },
+
   confettiPiecesPerBurst: 40,
 };
 
@@ -54,7 +59,6 @@ const dom = {
   giftRow: document.getElementById('giftRow'),
   confettiLayer: document.getElementById('confettiLayer'),
 
-  // Version 4
   birthdayCake: document.getElementById('birthdayCake'),
   cakeCandles: document.getElementById('cakeCandles'),
   cakeMessage: document.getElementById('cakeMessage'),
@@ -282,23 +286,13 @@ function initGiftBoxes() {
 
 /* -----------------------------------------------------
    9. CAKE & CANDLES — Rendering + Interaction
-   -----------------------------------------------------
-   renderCakeCandles() builds the candle elements from
-   CONFIG.cake.candleCount (kept separate from initCake()
-   so the candle count could be re-rendered independently
-   in a future version, e.g. if an age input is added).
-
-   initCake() runs a simple two-state cycle on the .cake
-   button: unlit → lit ("make a wish") → unlit-with-wish
-   ("wish granted" + confetti) → lit again, and so on.
-   This is intentionally repeatable, unlike the gift boxes.
 ----------------------------------------------------- */
 const CANDLE_COLORS = ['#ff8fab', '#f5c66b', '#b98be0', '#ffb997'];
 
 function renderCakeCandles() {
   if (!dom.cakeCandles) return;
 
-  dom.cakeCandles.innerHTML = ''; // safe: this container only ever holds generated candles
+  dom.cakeCandles.innerHTML = '';
 
   const count = Math.max(1, CONFIG.cake.candleCount);
   const fragment = document.createDocumentFragment();
@@ -308,7 +302,6 @@ function renderCakeCandles() {
     candle.className = 'candle';
 
     const color = CANDLE_COLORS[i % CANDLE_COLORS.length];
-    // Gentle height variance so a row of candles doesn't look robotically uniform
     const scale = i % 3 === 1 ? 1.15 : i % 3 === 2 ? 0.9 : 1;
 
     candle.style.setProperty('--candle-color', color);
@@ -334,8 +327,6 @@ function initCake() {
   let isLit = false;
   let hasWished = false;
 
-  // Keeps the message, the small hint line, and the button's own
-  // aria-label all in sync with the current state.
   function refreshCakeState() {
     if (isLit) {
       cake.setAttribute('aria-pressed', 'true');
@@ -366,15 +357,12 @@ function initCake() {
 
   function handleCakeActivate() {
     if (!isLit) {
-      // Light the candles
       isLit = true;
       cake.classList.add('is-lit');
       refreshCakeState();
       return;
     }
 
-    // Blow the candles out: play the puff animation, then settle into
-    // the "wish made" unlit state and celebrate with confetti.
     isLit = false;
     hasWished = true;
     cake.classList.remove('is-lit');
@@ -386,7 +374,6 @@ function initCake() {
 
     refreshCakeState();
 
-    // Confetti centered on the cake's actual position on screen
     const rect = cake.getBoundingClientRect();
     const originXPercent = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
     triggerConfetti(originXPercent);
@@ -397,16 +384,144 @@ function initCake() {
   cake.addEventListener('keydown', (event) => {
     const isActivationKey = event.key === 'Enter' || event.key === ' ';
     if (isActivationKey) {
-      event.preventDefault(); // stop Space from scrolling the page
+      event.preventDefault();
       handleCakeActivate();
     }
   });
 
-  refreshCakeState(); // sets the initial "tap to light" hint
+  refreshCakeState();
 }
 
 /* -----------------------------------------------------
-   10. EVENT LISTENERS
+   10. ENVIRONMENT SYSTEM — Wind + Light (Foundation)
+   -----------------------------------------------------
+   Shared "ambient state" for the whole site, exposed as
+   CSS custom properties on <html> so any element in the
+   stylesheet can react to one consistent wind direction/
+   strength and lighting mode instead of animating on its
+   own separate loop.
+
+   This version is deliberately mostly invisible — it's
+   the plumbing, laid down first so the next versions
+   (illustrated sky, swaying garden, fireflies, butterflies,
+   day/night toggle, cake lighting) all read from the same
+   source instead of each reinventing its own motion/color
+   logic. The one visible tie-in today is the existing
+   floating decorations (@keyframes floatDrift in style.css),
+   which now sway with this shared wind.
+----------------------------------------------------- */
+
+// --- Wind ---
+const WIND_CONFIG = {
+  updateIntervalMs: 120, // ~8 updates/sec — smooth enough for slow ambient sway,
+                          // far cheaper than a 60fps loop for something this subtle
+  baseAngleDeg: -6,       // gentle constant "prevailing" lean
+  swayDeg: 14,            // how far the angle wanders around that base
+  strengthMin: 0.25,
+  strengthMax: 0.85,
+};
+
+let windElapsedStart = null;
+
+/**
+ * Combines a few slow sine waves with mismatched periods/phases into one
+ * signal. A single sine would visibly "loop" on a short, predictable
+ * cycle; summing several avoids that mechanical feel without needing a
+ * full noise/Perlin implementation.
+ */
+function computeWindState(elapsedSeconds) {
+  const wave =
+    Math.sin(elapsedSeconds * 0.10) * 0.5 +
+    Math.sin(elapsedSeconds * 0.037 + 1.3) * 0.3 +
+    Math.sin(elapsedSeconds * 0.081 + 4.1) * 0.2; // settles roughly within -1..1
+
+  const angle = WIND_CONFIG.baseAngleDeg + wave * WIND_CONFIG.swayDeg;
+
+  const strengthWave = (Math.sin(elapsedSeconds * 0.06 + 2.2) + 1) / 2; // 0..1
+  const strength =
+    WIND_CONFIG.strengthMin + strengthWave * (WIND_CONFIG.strengthMax - WIND_CONFIG.strengthMin);
+
+  return { angle, strength };
+}
+
+function initWindSystem() {
+  const root = document.documentElement;
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+
+  if (prefersReducedMotion) {
+    // Set once, then stop — a gentle fixed lean rather than a perfectly
+    // static 0, so reduced-motion visitors still see a natural-looking
+    // (just unanimated) scene rather than everything snapping upright.
+    root.style.setProperty('--wind-angle', `${WIND_CONFIG.baseAngleDeg}deg`);
+    root.style.setProperty('--wind-strength', '0.3');
+    return;
+  }
+
+  windElapsedStart = performance.now();
+
+  function tick() {
+    const elapsedSeconds = (performance.now() - windElapsedStart) / 1000;
+    const { angle, strength } = computeWindState(elapsedSeconds);
+
+    root.style.setProperty('--wind-angle', `${angle.toFixed(2)}deg`);
+    root.style.setProperty('--wind-strength', strength.toFixed(3));
+  }
+
+  tick(); // apply an initial value immediately, rather than waiting for the first interval
+  window.setInterval(tick, WIND_CONFIG.updateIntervalMs);
+}
+
+// --- Light ---
+const LIGHT_PRESETS = {
+  day: {
+    sunColor: '#fff1d0',
+    ambientColor: 'rgba(255, 233, 184, 0.35)',
+    shadowColor: 'rgba(120, 90, 60, 0.22)',
+  },
+  // Not visually connected to anything yet — there's no sky or moon to
+  // show it off. Defined now so the future Day/Night button, illustrated
+  // sky, and glowing night-flowers can read these variables the day
+  // they're built, with zero changes needed in this function.
+  night: {
+    sunColor: '#b9c4e8',
+    ambientColor: 'rgba(90, 100, 160, 0.35)',
+    shadowColor: 'rgba(20, 20, 45, 0.4)',
+  },
+};
+
+let currentLightMode = 'day';
+
+function applyLightMode(mode) {
+  const root = document.documentElement;
+  const preset = LIGHT_PRESETS[mode] || LIGHT_PRESETS.day;
+
+  root.style.setProperty('--light-progress', mode === 'night' ? '1' : '0');
+  root.style.setProperty('--sun-color', preset.sunColor);
+  root.style.setProperty('--ambient-color', preset.ambientColor);
+  root.style.setProperty('--shadow-color', preset.shadowColor);
+
+  currentLightMode = mode;
+}
+
+// Exposed now so a future Day/Night button can call this directly —
+// no changes to this file will be needed when that button is added.
+function toggleLightMode() {
+  applyLightMode(currentLightMode === 'day' ? 'night' : 'day');
+}
+
+function initLightSystem() {
+  applyLightMode(CONFIG.environment.startMode);
+}
+
+function initEnvironmentSystem() {
+  initWindSystem();
+  initLightSystem();
+}
+
+/* -----------------------------------------------------
+   11. EVENT LISTENERS
 ----------------------------------------------------- */
 function bindEvents() {
   if (dom.startBtn) {
@@ -421,7 +536,7 @@ function bindEvents() {
 }
 
 /* -----------------------------------------------------
-   11. INIT — Runs once DOM is ready
+   12. INIT — Runs once DOM is ready
 ----------------------------------------------------- */
 function init() {
   applyPersonalization();
@@ -429,7 +544,8 @@ function init() {
   bindEvents();
   initBirthdayCard();
   initGiftBoxes();
-  initCake(); // Version 4
+  initCake();
+  initEnvironmentSystem(); // Version 5
 }
 
 document.addEventListener('DOMContentLoaded', init);
