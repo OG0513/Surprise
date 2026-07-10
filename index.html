@@ -17,11 +17,130 @@
 </head>
 <body>
 
-  <div class="bg-gradient" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow--one" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow--two" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow--three" aria-hidden="true"></div>
+  <!-- ============================================= -->
+  <!-- ILLUSTRATED WORLD BACKGROUND (Version 6)       -->
+  <!-- Replaces the old animated gradient + glow blobs -->
+  <!-- with a static-ish illustrated sky and a garden   -->
+  <!-- strip along the bottom. Fixed behind everything;  -->
+  <!-- purely decorative, so it's one aria-hidden block. -->
+  <!-- ============================================= -->
+  <div class="world" id="world" aria-hidden="true">
 
+    <div class="sky">
+      <svg class="sky__sun" viewBox="0 0 200 200" focusable="false">
+        <defs>
+          <radialGradient id="sunGlowGradient" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#fffaf0; stop-opacity:1" />
+            <stop offset="45%" style="stop-color:var(--sun-color); stop-opacity:0.9" />
+            <stop offset="100%" style="stop-color:var(--sun-color); stop-opacity:0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="95" fill="url(#sunGlowGradient)" />
+        <circle cx="100" cy="100" r="42" fill="#fff4d9" />
+      </svg>
+
+      <svg class="sky__cloud sky__cloud--1" viewBox="0 0 200 90" focusable="false">
+        <g fill="#ffffff" opacity="0.9">
+          <ellipse cx="55" cy="55" rx="55" ry="32" />
+          <ellipse cx="110" cy="42" rx="45" ry="38" />
+          <ellipse cx="150" cy="58" rx="38" ry="26" />
+          <ellipse cx="90" cy="65" rx="60" ry="22" />
+        </g>
+      </svg>
+
+      <svg class="sky__cloud sky__cloud--2" viewBox="0 0 200 90" focusable="false">
+        <g fill="#ffffff" opacity="0.8">
+          <ellipse cx="50" cy="50" rx="48" ry="26" />
+          <ellipse cx="100" cy="38" rx="40" ry="32" />
+          <ellipse cx="135" cy="52" rx="34" ry="22" />
+        </g>
+      </svg>
+
+      <svg class="sky__cloud sky__cloud--3" viewBox="0 0 200 90" focusable="false">
+        <g fill="#ffffff" opacity="0.85">
+          <ellipse cx="60" cy="52" rx="50" ry="28" />
+          <ellipse cx="112" cy="40" rx="42" ry="34" />
+          <ellipse cx="150" cy="55" rx="32" ry="22" />
+          <ellipse cx="85" cy="62" rx="55" ry="20" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="garden-strip" id="gardenStrip">
+      <div class="garden-strip__ground"></div>
+
+      <svg class="garden-flower" style="left:8%; --petal-color:#ff8fab; --center-color:#f5c66b; --sway-mult:0.7; --flower-scale:1.05;" viewBox="0 0 40 90" focusable="false">
+        <path class="garden-flower__stem" d="M20,90 C20,64 20,42 20,26" />
+        <path class="garden-flower__leaf" d="M20,68 C10,64 6,72 10,78 C15,80 20,76 20,68 Z" />
+        <g class="garden-flower__bloom" transform="translate(20,20)">
+          <circle class="garden-flower__petal" cx="0" cy="-9" r="7" />
+          <circle class="garden-flower__petal" cx="8" cy="-3" r="7" />
+          <circle class="garden-flower__petal" cx="5" cy="7" r="7" />
+          <circle class="garden-flower__petal" cx="-5" cy="7" r="7" />
+          <circle class="garden-flower__petal" cx="-8" cy="-3" r="7" />
+          <circle class="garden-flower__center" cx="0" cy="0" r="5" />
+        </g>
+      </svg>
+
+      <svg class="garden-flower" style="left:22%; --petal-color:#d9c9f5; --center-color:#fff8f2; --sway-mult:0.85; --flower-scale:0.85;" viewBox="0 0 40 90" focusable="false">
+        <path class="garden-flower__stem" d="M20,90 C20,66 20,46 20,30" />
+        <g class="garden-flower__bloom" transform="translate(20,24)">
+          <circle class="garden-flower__petal" cx="0" cy="-8" r="6" />
+          <circle class="garden-flower__petal" cx="7" cy="-2" r="6" />
+          <circle class="garden-flower__petal" cx="4" cy="6" r="6" />
+          <circle class="garden-flower__petal" cx="-4" cy="6" r="6" />
+          <circle class="garden-flower__petal" cx="-7" cy="-2" r="6" />
+          <circle class="garden-flower__center" cx="0" cy="0" r="4" />
+        </g>
+      </svg>
+
+      <svg class="garden-flower" style="left:47%; --petal-color:#f5c66b; --center-color:#ff8fab; --sway-mult:0.55; --flower-scale:1.2;" viewBox="0 0 40 90" focusable="false">
+        <path class="garden-flower__stem" d="M20,90 C20,60 20,38 20,22" />
+        <path class="garden-flower__leaf" d="M20,66 C30,62 34,70 30,76 C25,78 20,74 20,66 Z" />
+        <g class="garden-flower__bloom" transform="translate(20,16)">
+          <circle class="garden-flower__petal" cx="0" cy="-10" r="8" />
+          <circle class="garden-flower__petal" cx="9" cy="-3" r="8" />
+          <circle class="garden-flower__petal" cx="6" cy="8" r="8" />
+          <circle class="garden-flower__petal" cx="-6" cy="8" r="8" />
+          <circle class="garden-flower__petal" cx="-9" cy="-3" r="8" />
+          <circle class="garden-flower__center" cx="0" cy="0" r="5.5" />
+        </g>
+      </svg>
+
+      <svg class="garden-flower" style="left:68%; --petal-color:#ff8fab; --center-color:#fff8f2; --sway-mult:0.75; --flower-scale:0.9;" viewBox="0 0 40 90" focusable="false">
+        <path class="garden-flower__stem" d="M20,90 C20,65 20,44 20,28" />
+        <g class="garden-flower__bloom" transform="translate(20,22)">
+          <circle class="garden-flower__petal" cx="0" cy="-8" r="6.5" />
+          <circle class="garden-flower__petal" cx="7.5" cy="-2" r="6.5" />
+          <circle class="garden-flower__petal" cx="4.5" cy="6.5" r="6.5" />
+          <circle class="garden-flower__petal" cx="-4.5" cy="6.5" r="6.5" />
+          <circle class="garden-flower__petal" cx="-7.5" cy="-2" r="6.5" />
+          <circle class="garden-flower__center" cx="0" cy="0" r="4.5" />
+        </g>
+      </svg>
+
+      <svg class="garden-flower" style="left:86%; --petal-color:#d9c9f5; --center-color:#f5c66b; --sway-mult:0.65; --flower-scale:1.0;" viewBox="0 0 40 90" focusable="false">
+        <path class="garden-flower__stem" d="M20,90 C20,62 20,40 20,24" />
+        <path class="garden-flower__leaf" d="M20,70 C10,66 6,74 10,80 C15,82 20,78 20,70 Z" />
+        <g class="garden-flower__bloom" transform="translate(20,18)">
+          <circle class="garden-flower__petal" cx="0" cy="-9" r="7" />
+          <circle class="garden-flower__petal" cx="8" cy="-3" r="7" />
+          <circle class="garden-flower__petal" cx="5" cy="7" r="7" />
+          <circle class="garden-flower__petal" cx="-5" cy="7" r="7" />
+          <circle class="garden-flower__petal" cx="-8" cy="-3" r="7" />
+          <circle class="garden-flower__center" cx="0" cy="0" r="5" />
+        </g>
+      </svg>
+
+      <!-- Butterflies + fireflies are generated by JS (see initButterflies() /
+           initFireflies() in script.js) and injected here, confined to this
+           container only — so they stay above the garden, never in the sky. -->
+      <div class="creature-layer" id="creatureLayer"></div>
+    </div>
+
+  </div>
+
+  <!-- Floating particle sparkles (unrelated to the world above; kept as-is) -->
   <div class="particles" id="particles" aria-hidden="true"></div>
 
   <!-- Confetti burst layer — reused by every "reveal" object -->
@@ -209,10 +328,6 @@
 
       <!-- ============================================= -->
       <!-- SCENE: CAKE & CANDLES                          -->
-      <!-- Tap the cake to light the candles, tap again    -->
-      <!-- to blow them out (repeatable "make a wish"       -->
-      <!-- ritual). Built entirely from CSS shapes — no     -->
-      <!-- images, no emoji for the cake itself.            -->
       <!-- ============================================= -->
       <div class="scene scene--cake">
         <header class="scene__header">
@@ -229,13 +344,8 @@
             aria-pressed="false"
             aria-label="Birthday cake, candles unlit. Press to light them and make a wish."
           >
-            <!-- Entire visual assembly is decorative; the accessible
-                 state lives on this button's aria-label + the
-                 aria-live message below, not on this subtree. -->
             <div class="cake__body" aria-hidden="true">
-              <div class="cake__candles" id="cakeCandles">
-                <!-- candle elements injected by JS, see CONFIG.cake.candleCount -->
-              </div>
+              <div class="cake__candles" id="cakeCandles"></div>
 
               <div class="cake__tier cake__tier--top">
                 <span class="cake__drip"></span>
@@ -253,16 +363,13 @@
             </div>
           </div>
 
-          <!-- Real, always-in-flow content: announces state changes.
-               aria-live lives HERE (not also on .scene__hint below) so
-               a single tap only triggers one screen-reader announcement. -->
           <p class="cake__message" id="cakeMessage" aria-live="polite"></p>
         </div>
 
         <p class="scene__hint" id="cakeStatusHint">tap the cake to light the candles</p>
       </div>
 
-      <!-- Future scenes (flowers, teddy bear, gallery, etc.)
+      <!-- Future scenes (flowers detail, teddy bear, gallery, etc.)
            will be appended here as additional .scene blocks. -->
 
     </div>
