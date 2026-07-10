@@ -90,8 +90,19 @@ button {
 }
 
 /* =====================================================
-   3. ILLUSTRATED WORLD — Sky + Garden (layered, Version 7)
+   3. ILLUSTRATED WORLD — Sky + Garden (Version 8: procedural flowers)
 ===================================================== */
+.flower-sprite-defs {
+  /* Zero-size, invisible library of <symbol> definitions.
+     Standard "hidden sprite sheet" pattern — nothing here
+     ever renders directly; every flower on screen is a
+     <use> pointing back into this one block. */
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .world {
   position: fixed;
   inset: 0;
@@ -161,13 +172,7 @@ button {
   50% { transform: translateX(3%); }
 }
 
-/* --- Garden: 4 depth layers ---
-   Furthest (4) to closest (1). Each layer = one organic SVG
-   terrain silhouette + one content div for whatever lives at
-   that depth. Layers bleed 6% past each side so the field
-   never appears to end abruptly at the viewport edge; .garden
-   itself clips that intentional overflow so it doesn't create
-   a page-level scrollbar. */
+/* --- Garden: 4 depth layers --- */
 .garden {
   position: absolute;
   left: 0;
@@ -178,9 +183,6 @@ button {
 }
 
 .garden::after {
-  /* shared ambient light wash across every depth layer at once,
-     so the whole garden responds to the Light System consistently
-     with the sky above it */
   content: '';
   position: absolute;
   inset: 0;
@@ -203,21 +205,35 @@ button {
 }
 
 .garden-layer--4 { height: 50%; z-index: 1; }
-.garden-layer--4 .garden-layer__terrain { filter: blur(4px); } /* "very soft blur" on the furthest layer */
+.garden-layer--4 .garden-layer__terrain { filter: blur(4px); }
 
-.garden-layer--3 { height: 62%; z-index: 2; } /* crisp — small elements need to stay legible */
+.garden-layer--3 { height: 62%; z-index: 2; }
 
-.garden-layer--2 { height: 78%; z-index: 3; } /* crisp — the in-focus main flower field */
+.garden-layer--2 { height: 78%; z-index: 3; }
 
 .garden-layer--1 { height: 92%; z-index: 4; bottom: -4%; }
-.garden-layer--1 .garden-layer__terrain { filter: blur(1.2px); } /* "slight blur" on the closest objects */
+.garden-layer--1 .garden-layer__terrain { filter: blur(1.2px); }
+.garden-layer--1 .garden-layer__contents {
+  /* "Slight blur on the closest objects" — the terrain silhouette above
+     already gets it; this extends a lighter touch to the actual flowers
+     living in this layer too, so the whole nearest band feels shallow-
+     depth-of-field rather than only its ground shape being soft. */
+  filter: blur(0.6px);
+}
 
 .garden-layer__contents {
   position: absolute;
   inset: 0;
 }
 
-/* --- Wildflowers (unchanged from Version 6) --- */
+/* --- Procedural flowers (Version 8) ---
+   One shared geometry per species lives in the sprite sheet above;
+   every instance below is a <use> + this positioning/coloring layer.
+   height/width variation = --flower-scale. stem angle = --stem-lean
+   (rotates only the stem+leaf group). bloom rotation = --bloom-rotation
+   (rotates only the bloom, independent of the stem). sway strength =
+   --sway-mult. Wind timing stagger = per-instance transition-delay/
+   duration, set inline by generateFlowerField() in script.js. */
 .garden-flower {
   position: absolute;
   bottom: 4%;
@@ -225,8 +241,19 @@ button {
   height: auto;
   transform-origin: bottom center;
   transform: rotate(calc(var(--wind-angle) * var(--sway-mult, 0.6))) scale(var(--flower-scale, 1));
-  transition: transform 0.3s ease-out;
+  transition-property: transform;
+  transition-timing-function: ease-out;
   filter: drop-shadow(0 4px 6px rgba(80, 60, 40, 0.12));
+}
+
+.garden-flower__stem-group {
+  transform: rotate(var(--stem-lean, 0deg));
+  transform-origin: 20px 100px;
+}
+
+.garden-flower__bloom {
+  transform: rotate(var(--bloom-rotation, 0deg));
+  transform-origin: 0 0;
 }
 
 .garden-flower__stem {
@@ -249,11 +276,14 @@ button {
   fill: var(--center-color, #f5c66b);
 }
 
-/* --- Creature layer: butterflies + fireflies (unchanged from Version 6) --- */
+/* --- Creature layer: butterflies + fireflies (unchanged from Version 6) ---
+   Explicit z-index added so butterflies/fireflies reliably render above
+   the procedurally-injected flowers regardless of DOM insertion order. */
 .creature-layer {
   position: absolute;
   inset: 0 0 20% 0;
   pointer-events: none;
+  z-index: 2;
 }
 
 .butterfly {
