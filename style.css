@@ -31,25 +31,12 @@
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* =====================================================
-     ENVIRONMENT ENGINE (Version 5)
-     ---------------------------------------------------
-     Continuously updated by JS (see "ENVIRONMENT SYSTEM"
-     in script.js). These don't change anything visually
-     by themselves — they're shared ambient state that
-     future scenes (illustrated sky, swaying garden,
-     fireflies, butterflies, day/night toggle) will read,
-     so the whole site reacts to ONE consistent wind and
-     light source instead of everything animating on its
-     own separate loop.
-
-     Wind is live today (see @keyframes floatDrift below).
-     Light is defined but not yet wired to anything visible
-     — there's no sky or toggle button yet to show it off.
-  ===================================================== */
+  /* ENVIRONMENT ENGINE (Version 5) — updated continuously by JS.
+     Version 6 gives --sun-color / --ambient-color their first real
+     visible job: the sky's warm wash below. */
   --wind-angle: -6deg;
   --wind-strength: 0.4;
-  --light-progress: 0;    /* 0 = full day, 1 = full night */
+  --light-progress: 0;
   --sun-color: #fff1d0;
   --ambient-color: rgba(255, 233, 184, 0.35);
   --shadow-color: rgba(120, 90, 60, 0.22);
@@ -106,71 +93,224 @@ button {
 }
 
 /* =====================================================
-   3. BACKGROUND LAYERS
+   3. ILLUSTRATED WORLD — Sky + Garden Strip (Version 6)
+   -----------------------------------------------------
+   Replaces the old animated gradient + blurred glow blobs.
+   Fixed behind everything, same slot the old background
+   occupied (z-index -3). Mostly static illustration —
+   the only motion is slow cloud drift, a gentle sun
+   pulse, wind-driven flower sway, and the butterflies/
+   fireflies confined to the garden strip below.
 ===================================================== */
-.bg-gradient {
+.world {
   position: fixed;
   inset: 0;
   z-index: -3;
-  background: linear-gradient(
-    135deg,
-    var(--color-cream) 0%,
-    var(--color-peach) 25%,
-    var(--color-pink) 50%,
-    var(--color-lavender) 75%,
-    var(--color-sky) 100%
-  );
-  background-size: 300% 300%;
-  animation: gradientDrift 18s ease-in-out infinite;
+  overflow: hidden;
+  background: #eaf6ff;
 }
 
-@keyframes gradientDrift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+.sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #bce4f7 0%, #dff3fb 55%, #fdf3e3 100%);
 }
 
-.bg-glow {
-  position: fixed;
-  z-index: -2;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.55;
+.sky::after {
+  /* warm ambient wash — driven by the Version 5 Light System.
+     Day mode now; ready for night mode the day a toggle exists. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 78% 12%, var(--ambient-color), transparent 55%);
   pointer-events: none;
 }
 
-.bg-glow--one {
-  width: clamp(200px, 40vw, 500px);
-  aspect-ratio: 1 / 1;
-  top: -10%;
-  left: -10%;
-  background: radial-gradient(circle, var(--color-gold-light), transparent 70%);
-  animation: floatBlob 14s ease-in-out infinite;
+.sky__sun {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: clamp(90px, 16vw, 170px);
+  height: auto;
+  animation: sunPulse 9s ease-in-out infinite;
 }
 
-.bg-glow--two {
-  width: clamp(220px, 45vw, 550px);
-  aspect-ratio: 1 / 1;
-  bottom: -15%;
-  right: -10%;
-  background: radial-gradient(circle, var(--color-rose), transparent 70%);
-  opacity: 0.35;
-  animation: floatBlob 16s ease-in-out infinite reverse;
+@keyframes sunPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
 }
 
-.bg-glow--three {
-  width: clamp(180px, 35vw, 420px);
-  aspect-ratio: 1 / 1;
-  top: 40%;
-  left: 60%;
-  background: radial-gradient(circle, var(--color-purple-light), transparent 70%);
-  opacity: 0.3;
-  animation: floatBlob 20s ease-in-out infinite;
+.sky__cloud {
+  position: absolute;
+  width: clamp(90px, 16vw, 190px);
+  height: auto;
 }
 
-@keyframes floatBlob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(3%, -4%) scale(1.08); }
+.sky__cloud--1 {
+  top: 12%;
+  left: 8%;
+  animation: cloudDrift 70s ease-in-out infinite;
+}
+
+.sky__cloud--2 {
+  top: 24%;
+  right: 20%;
+  width: clamp(70px, 13vw, 150px);
+  animation: cloudDrift 85s ease-in-out infinite reverse;
+}
+
+.sky__cloud--3 {
+  top: 6%;
+  left: 42%;
+  width: clamp(80px, 15vw, 170px);
+  animation: cloudDrift 95s ease-in-out infinite;
+  animation-delay: -20s;
+}
+
+@keyframes cloudDrift {
+  /* Same keyframe reused across all three clouds; different durations,
+     a reversed direction, and a negative delay keep them from ever
+     drifting in sync with each other. */
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3%); }
+}
+
+/* --- Garden strip: the lower band of the world --- */
+.garden-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(220px, 34vh, 420px); /* "lower 30–40% of the screen" from the brief */
+  overflow: hidden;
+}
+
+.garden-strip__ground {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #bfe3ab 0%, #9bcf85 40%, #7fbd6d 100%);
+}
+
+.garden-strip__ground::before {
+  /* soft seam where sky meets ground, so the join doesn't read as a
+     hard, obviously-CSS edge */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent);
+}
+
+/* --- Wildflowers: 5 hand-placed SVG flowers (see index.html) ---
+   A fuller garden (grass blades, mushrooms, stones, fence, more
+   flower variety) is intentionally left for a dedicated Garden
+   version — these five exist so the butterflies/fireflies below
+   have somewhere to hover. */
+.garden-flower {
+  position: absolute;
+  bottom: 4%;
+  width: clamp(22px, 5.5vw, 42px);
+  height: auto;
+  transform-origin: bottom center;
+  transform: rotate(calc(var(--wind-angle) * var(--sway-mult, 0.6))) scale(var(--flower-scale, 1));
+  transition: transform 0.3s ease-out; /* smooths the ~120ms stepped wind updates into fluid sway */
+  filter: drop-shadow(0 4px 6px rgba(80, 60, 40, 0.12));
+}
+
+.garden-flower__stem {
+  fill: none;
+  stroke: #6b8f5a;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.garden-flower__leaf {
+  fill: #7ea968;
+}
+
+.garden-flower__petal {
+  fill: var(--petal-color, #ff8fab);
+  opacity: 0.95;
+}
+
+.garden-flower__center {
+  fill: var(--center-color, #f5c66b);
+}
+
+/* --- Creature layer: butterflies + fireflies live here only ---
+   Scoped to the upper ~80% of the garden strip (above the flower
+   bases), never extending into the sky. Contents are generated by
+   initButterflies() / initFireflies() in script.js. */
+.creature-layer {
+  position: absolute;
+  inset: 0 0 20% 0;
+  pointer-events: none;
+}
+
+.butterfly {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(26px, 5vw, 40px);
+  height: auto;
+  will-change: transform;
+}
+
+.butterfly svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.butterfly__wing {
+  fill: var(--wing-color, #ff8fab);
+  opacity: 0.92;
+  transform-box: fill-box;
+  animation: wingFlap 0.42s ease-in-out infinite;
+}
+
+.butterfly__wing--left { transform-origin: 100% 50%; }
+.butterfly__wing--right { transform-origin: 0% 50%; animation-duration: 0.4s; }
+
+@keyframes wingFlap {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.3); }
+}
+
+.butterfly.is-resting .butterfly__wing {
+  animation-duration: 1.6s; /* slower, gentler flutter while "landed" */
+}
+
+.butterfly__body {
+  fill: #4a3b52;
+}
+
+.firefly {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--firefly-size, 6px);
+  height: var(--firefly-size, 6px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8, #f5c66b 60%, transparent 100%);
+  box-shadow: 0 0 6px 2px rgba(245, 198, 107, 0.6);
+  transform: translate(0, 0);
+  opacity: 0;
+  /* --move-duration is updated per-move by JS; opacity's own 0.4s only
+     matters while the blink animation below is paused (during a
+     "teleport" — see scheduleFireflyMove in script.js) */
+  transition: transform var(--move-duration, 4s) ease-in-out, opacity 0.4s ease;
+  animation: fireflyBlink var(--blink-duration, 2.4s) ease-in-out infinite;
+  animation-delay: var(--blink-delay, 0s);
+  will-change: transform, opacity;
+}
+
+@keyframes fireflyBlink {
+  0%, 100% { opacity: var(--blink-min, 0.25); }
+  50% { opacity: var(--blink-max, 0.95); }
 }
 
 /* =====================================================
@@ -247,11 +387,6 @@ button {
 .f8 { top: 30%; right: 25%; animation-duration: 8s; animation-delay: 0.4s; }
 
 @keyframes floatDrift {
-  /* Version 5: base sway is the same shape as before, but rotation and
-     lift now blend in the live --wind-angle / --wind-strength values
-     from the new Environment System, so these decorations move with
-     the same shared wind that later garden elements will use — rather
-     than each floating independently on its own fixed loop. */
   0%, 100% {
     transform: translateY(0) rotate(calc(var(--wind-angle) * 0.4));
   }
@@ -1167,6 +1302,10 @@ button {
     max-width: 260px;
     margin-inline: auto;
   }
+
+  .garden-strip {
+    height: clamp(180px, 30vh, 320px);
+  }
 }
 
 @media (min-width: 768px) {
@@ -1203,5 +1342,12 @@ button {
   }
   .cake {
     width: min(55%, 220px);
+  }
+  .garden-strip {
+    height: clamp(140px, 26vh, 220px);
+  }
+  .sky__sun,
+  .sky__cloud {
+    transform: scale(0.8);
   }
 }
