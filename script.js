@@ -1,7 +1,6 @@
 /* =====================================================
    BIRTHDAY WEBSITE — MAIN SCRIPT
-   Version 6: + Illustrated World (Sky, Garden Strip,
-   Butterflies, Fireflies — no birds)
+   Version 8: + Procedural Flower Field (9 species, ~70 flowers)
 ===================================================== */
 
 'use strict';
@@ -32,11 +31,9 @@ const CONFIG = {
     startMode: 'day',
   },
 
-  // Version 6 — Illustrated World: butterflies + fireflies, both confined
-  // to the garden strip (see CSS .creature-layer).
   world: {
     butterflyCount: 2,
-    fireflyCount: 10, // scales down slightly on small screens, see initFireflies()
+    fireflyCount: 10,
   },
 
   confettiPiecesPerBurst: 40,
@@ -69,7 +66,6 @@ const dom = {
   cakeMessage: document.getElementById('cakeMessage'),
   cakeStatusHint: document.getElementById('cakeStatusHint'),
 
-  // Version 6
   world: document.getElementById('world'),
   gardenStrip: document.getElementById('gardenStrip'),
   creatureLayer: document.getElementById('creatureLayer'),
@@ -497,16 +493,212 @@ function initEnvironmentSystem() {
 }
 
 /* -----------------------------------------------------
-   11. ILLUSTRATED WORLD — Butterflies + Fireflies
+   11. PROCEDURAL FLOWER FIELD (Version 8)
    -----------------------------------------------------
-   Both live inside #creatureLayer, scoped in CSS to the
-   upper portion of the garden strip only — so they stay
-   "above the flowers," never drifting into the sky.
+   Each species' actual petal/stem geometry lives ONCE in
+   the <symbol> sprite sheet in index.html. Every flower
+   instance created here is a lightweight <use> pointing
+   back at one of those 9 symbols, styled per-instance via
+   CSS custom properties — nothing about the shape itself
+   is duplicated, only position/color/size/rotation/timing.
 
-   Each creature runs its OWN independent timer, started
-   with a randomized initial delay, rather than one shared
-   loop driving all of them — that's what keeps their
-   movement, blinking, and pausing from ever synchronizing.
+   Distribution uses a small number of randomly-placed
+   "cluster centers," with each flower's position jittered
+   around one of them (or, occasionally, placed completely
+   independently as a "loner") — producing natural-looking
+   dense patches and gaps rather than an even scatter.
+----------------------------------------------------- */
+
+const FLOWER_SPECIES = [
+  {
+    id: 'wildflower', symbol: 'flower-wildflower', baseScale: 1.0, baseSway: 0.7,
+    palette: [
+      { petal: '#ff8fab', center: '#f5c66b' },
+      { petal: '#d9c9f5', center: '#fff8f2' },
+      { petal: '#f5c66b', center: '#ff8fab' },
+    ],
+  },
+  {
+    id: 'rose', symbol: 'flower-rose', baseScale: 1.05, baseSway: 0.45,
+    palette: [
+      { petal: '#e0577a' },
+      { petal: '#ff8fab' },
+      { petal: '#c9436b' },
+      { petal: '#f5b8c8' },
+    ],
+  },
+  {
+    id: 'tulip', symbol: 'flower-tulip', baseScale: 1.1, baseSway: 0.5,
+    palette: [
+      { petal: '#ff8fab', center: '#c9436b' },
+      { petal: '#f5c66b', center: '#e0a53a' },
+      { petal: '#b98be0', center: '#8a5cc4' },
+      { petal: '#ff7a6f', center: '#c9483f' },
+    ],
+  },
+  {
+    id: 'daisy', symbol: 'flower-daisy', baseScale: 0.85, baseSway: 0.8,
+    palette: [
+      { petal: '#fffdf7', center: '#f5c66b' },
+      { petal: '#fdf0e6', center: '#f0a93a' },
+    ],
+  },
+  {
+    id: 'sunflower', symbol: 'flower-sunflower', baseScale: 1.4, baseSway: 0.35,
+    palette: [
+      { petal: '#f5c66b', center: '#7a5230' },
+      { petal: '#f0b93a', center: '#6b431f' },
+    ],
+  },
+  {
+    id: 'bluebell', symbol: 'flower-bluebell', baseScale: 0.8, baseSway: 0.85,
+    palette: [
+      { petal: '#7ea0e0' },
+      { petal: '#8f7fd6' },
+      { petal: '#6a8fd1' },
+    ],
+  },
+  {
+    id: 'poppy', symbol: 'flower-poppy', baseScale: 1.1, baseSway: 0.55,
+    palette: [
+      { petal: '#e0473f', center: '#3a2a1e' },
+      { petal: '#ef7a3c', center: '#3a2a1e' },
+    ],
+  },
+  {
+    id: 'lavender', symbol: 'flower-lavender', baseScale: 0.9, baseSway: 0.9,
+    palette: [
+      { petal: '#9b87d1' },
+      { petal: '#b98be0' },
+      { petal: '#8069c2' },
+    ],
+  },
+  {
+    id: 'babysBreath', symbol: 'flower-babys-breath', baseScale: 0.65, baseSway: 1.0,
+    palette: [
+      { petal: '#ffffff' },
+      { petal: '#fdf0f5' },
+    ],
+  },
+];
+
+const FLOWER_FIELD_CONFIG = {
+  layerSplit: { 1: 8, 2: 42, 3: 20 }, // ~70 total — within the 60-100 brief, chosen for perf headroom
+  clusterCount: 7,
+  clusterSpreadPercent: 9,
+  loneFlowerChance: 0.15,
+  smallScreenMultiplier: 0.65,
+};
+
+function jitterGaussianish(spread) {
+  // Sum of 3 uniforms approximates a bell curve (central limit theorem),
+  // so positions cluster naturally around a center with soft falloff
+  // instead of a hard-edged uniform blob.
+  const sum = Math.random() + Math.random() + Math.random() - 1.5;
+  return (sum / 1.5) * spread;
+}
+
+function buildClusterCenters(count) {
+  const centers = [];
+  for (let i = 0; i < count; i++) {
+    centers.push(Math.random() * 100);
+  }
+  return centers;
+}
+
+function pickFlowerLeftPercent(clusterCenters) {
+  const useCluster = Math.random() > FLOWER_FIELD_CONFIG.loneFlowerChance;
+  if (!useCluster || clusterCenters.length === 0) {
+    return Math.random() * 100; // an occasional "loner," scattered independently
+  }
+  const center = clusterCenters[Math.floor(Math.random() * clusterCenters.length)];
+  return center + jitterGaussianish(FLOWER_FIELD_CONFIG.clusterSpreadPercent);
+}
+
+function createFlowerInstance(layerNumber, clusterCenters) {
+  const species = FLOWER_SPECIES[Math.floor(Math.random() * FLOWER_SPECIES.length)];
+  const colorway = species.palette[Math.floor(Math.random() * species.palette.length)];
+
+  let leftPercent = pickFlowerLeftPercent(clusterCenters);
+  // Layer 1 (closest) is allowed to bleed past 0–100 so a few large
+  // flowers are genuinely cropped by the viewport edge, per the brief.
+  const minLeft = layerNumber === 1 ? -8 : 1;
+  const maxLeft = layerNumber === 1 ? 108 : 99;
+  leftPercent = Math.min(maxLeft, Math.max(minLeft, leftPercent));
+
+  const layerScale = layerNumber === 1 ? 1.5 : layerNumber === 3 ? 0.55 : 1;
+  const scale = species.baseScale * layerScale * (0.75 + Math.random() * 0.5);
+
+  // Heavier/larger instances sway less; smaller ones sway more — combines
+  // each species' inherent tendency with this specific instance's size.
+  const sizeFactor = Math.min(1.4, Math.max(0.6, scale));
+  const swayMult = (species.baseSway / sizeFactor) * (0.85 + Math.random() * 0.3);
+
+  const bottomBase = layerNumber === 1 ? 8 : layerNumber === 2 ? 10 : 14;
+  const bottomPercent = bottomBase + (Math.random() * 10 - 5);
+
+  const bloomRotation = (Math.random() * 30 - 15).toFixed(1);
+  const stemLean = (Math.random() * 14 - 7).toFixed(1);
+
+  // Staggers each flower's reaction to the shared --wind-angle value so
+  // the field doesn't sway in perfect lockstep — an approximation of
+  // "different wind timing" at flower scale; true spatial wave
+  // propagation across the field arrives with the grass system.
+  const transitionDelay = (Math.random() * 0.5).toFixed(2);
+  const transitionDuration = (0.25 + Math.random() * 0.3).toFixed(2);
+
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  el.setAttribute('viewBox', '0 0 40 100');
+  el.setAttribute('focusable', 'false');
+  el.classList.add('garden-flower');
+
+  el.style.left = `${leftPercent.toFixed(2)}%`;
+  el.style.bottom = `${bottomPercent.toFixed(2)}%`;
+  el.style.setProperty('--flower-scale', scale.toFixed(2));
+  el.style.setProperty('--sway-mult', swayMult.toFixed(2));
+  el.style.setProperty('--bloom-rotation', `${bloomRotation}deg`);
+  el.style.setProperty('--stem-lean', `${stemLean}deg`);
+  el.style.setProperty('--petal-color', colorway.petal);
+  if (colorway.center) {
+    el.style.setProperty('--center-color', colorway.center);
+  }
+  el.style.transitionDelay = `${transitionDelay}s`;
+  el.style.transitionDuration = `${transitionDuration}s`;
+
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', `#${species.symbol}`);
+  use.setAttribute('width', '40');
+  use.setAttribute('height', '100');
+  el.appendChild(use);
+
+  return el;
+}
+
+function generateFlowerField() {
+  const isSmallScreen = window.innerWidth < 480;
+  const multiplier = isSmallScreen ? FLOWER_FIELD_CONFIG.smallScreenMultiplier : 1;
+  const clusterCenters = buildClusterCenters(FLOWER_FIELD_CONFIG.clusterCount);
+
+  Object.entries(FLOWER_FIELD_CONFIG.layerSplit).forEach(([layerNumber, baseCount]) => {
+    const container = document.querySelector(`.garden-layer--${layerNumber} .garden-layer__contents`);
+    if (!container) return;
+
+    const count = Math.round(baseCount * multiplier);
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < count; i++) {
+      fragment.appendChild(createFlowerInstance(Number(layerNumber), clusterCenters));
+    }
+
+    container.appendChild(fragment);
+  });
+}
+
+/* -----------------------------------------------------
+   12. ILLUSTRATED WORLD — Butterflies + Fireflies
+   -----------------------------------------------------
+   Unchanged from Version 6/7. Not yet aware of individual
+   flower positions — that lands in a future version.
 ----------------------------------------------------- */
 
 function getCreatureLayerBounds() {
@@ -515,7 +707,6 @@ function getCreatureLayerBounds() {
   return { width: rect.width, height: rect.height };
 }
 
-// --- Butterflies ---
 const BUTTERFLY_WING_COLORS = ['#ff8fab', '#b98be0', '#f5c66b'];
 
 function createButterflyElement(index) {
@@ -545,18 +736,18 @@ function flyButterflyToRandomPoint(el, prefersReducedMotion) {
   if (!bounds) return;
 
   const targetX = Math.random() * Math.max(0, bounds.width - 40);
-  const targetY = Math.random() * Math.max(0, bounds.height - 40) * 0.8; // stay in the upper 80% of the band
+  const targetY = Math.random() * Math.max(0, bounds.height - 40) * 0.8;
 
   const prevX = parseFloat(el.dataset.x || targetX);
   const facingRight = targetX >= prevX;
-  const duration = Math.random() * 3 + 3.5; // 3.5s–6.5s per flight leg
+  const duration = Math.random() * 3 + 3.5;
 
   el.style.transition = `transform ${duration}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
   el.style.transform = `translate(${targetX}px, ${targetY}px) scaleX(${facingRight ? 1 : -1})`;
   el.dataset.x = targetX;
   el.classList.remove('is-resting');
 
-  const willRest = Math.random() < 0.4; // sometimes "land" before flying again
+  const willRest = Math.random() < 0.4;
   const pauseDuration = willRest ? Math.random() * 2500 + 1500 : Math.random() * 900 + 300;
 
   window.setTimeout(() => {
@@ -583,7 +774,7 @@ function initButterflies() {
       el.dataset.x = startX;
     }
 
-    if (prefersReducedMotion) continue; // stays put; wing-flap is frozen by the global reduced-motion rule too
+    if (prefersReducedMotion) continue;
 
     window.setTimeout(() => {
       flyButterflyToRandomPoint(el, prefersReducedMotion);
@@ -591,13 +782,12 @@ function initButterflies() {
   }
 }
 
-// --- Fireflies ---
 function createFireflyElement() {
   const el = document.createElement('span');
   el.className = 'firefly';
 
-  const size = Math.random() * 3 + 4; // 4px–7px
-  const blinkDuration = Math.random() * 2 + 1.8; // 1.8s–3.8s
+  const size = Math.random() * 3 + 4;
+  const blinkDuration = Math.random() * 2 + 1.8;
   const blinkDelay = Math.random() * 3;
 
   el.style.setProperty('--firefly-size', `${size}px`);
@@ -617,15 +807,11 @@ function scheduleFireflyMove(el, prefersReducedMotion) {
 
   const targetX = Math.random() * bounds.width;
   const targetY = Math.random() * bounds.height;
-  const willTeleport = Math.random() < 0.2; // occasionally vanish and reappear instead of drifting
-  const moveDuration = Math.random() * 4 + 3; // 3s–7s, independent per firefly
+  const willTeleport = Math.random() < 0.2;
+  const moveDuration = Math.random() * 4 + 3;
   const pauseDuration = Math.random() * 2500 + 800;
 
   if (willTeleport) {
-    // Pause blinking so our own opacity fade can take effect (a running
-    // CSS animation otherwise keeps overriding opacity every frame),
-    // fade out, relocate while invisible, fade back in, then hand
-    // blinking control back to the keyframe animation.
     el.style.animationPlayState = 'paused';
     el.style.opacity = '0';
 
@@ -665,7 +851,7 @@ function initFireflies() {
       el.style.transform = `translate(${Math.random() * bounds.width}px, ${Math.random() * bounds.height}px)`;
     }
 
-    if (prefersReducedMotion) continue; // stays put; blink is frozen by the global reduced-motion rule too
+    if (prefersReducedMotion) continue;
 
     window.setTimeout(() => scheduleFireflyMove(el, prefersReducedMotion), Math.random() * 4000);
   }
@@ -677,7 +863,7 @@ function initIllustratedWorld() {
 }
 
 /* -----------------------------------------------------
-   12. EVENT LISTENERS
+   13. EVENT LISTENERS
 ----------------------------------------------------- */
 function bindEvents() {
   if (dom.startBtn) {
@@ -692,7 +878,7 @@ function bindEvents() {
 }
 
 /* -----------------------------------------------------
-   13. INIT — Runs once DOM is ready
+   14. INIT — Runs once DOM is ready
 ----------------------------------------------------- */
 function init() {
   applyPersonalization();
@@ -702,7 +888,8 @@ function init() {
   initGiftBoxes();
   initCake();
   initEnvironmentSystem();
-  initIllustratedWorld(); // Version 6
+  generateFlowerField(); // Version 8
+  initIllustratedWorld();
 }
 
 document.addEventListener('DOMContentLoaded', init);
