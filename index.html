@@ -17,15 +17,6 @@
 </head>
 <body>
 
-  <!-- ============================================= -->
-  <!-- FLOWER SPRITE SHEET (Version 8)                 -->
-  <!-- Each species' geometry is defined ONCE here as   -->
-  <!-- a <symbol>. The procedural generator in script.js -->
-  <!-- creates ~70 lightweight <use> instances that each  -->
-  <!-- reference one of these — the path data itself      -->
-  <!-- never gets duplicated per flower. Invisible: zero   -->
-  <!-- box size, purely a definitions library.             -->
-  <!-- ============================================= -->
   <svg class="flower-sprite-defs" aria-hidden="true" focusable="false">
     <defs>
 
@@ -179,6 +170,70 @@
         </g>
       </symbol>
 
+      <!-- ============================================= -->
+      <!-- GRASS + GARDEN PROPS (Version 9)                -->
+      <!-- Same "reused-definition" pattern as the flowers  -->
+      <!-- above: one pattern tile and 5 prop symbols, each  -->
+      <!-- defined ONCE, referenced many times.               -->
+      <!-- ============================================= -->
+
+      <!-- One grass-blade tile (5 blades, varied height/lean/color),
+           tiled by generateGrass() across a handful of band <rect>s
+           per layer. Native SVG pattern tiling = the visual density
+           of "thousands of blades" without thousands of DOM nodes. -->
+      <pattern id="grassBladePattern" width="70" height="100" patternUnits="userSpaceOnUse">
+        <path class="grass-blade" d="M8,100 C5,70 5,35 8,5 C11,35 11,70 8,100 Z" fill="#5a9c46" />
+        <path class="grass-blade" d="M22,100 C19,75 20,45 24,20 C28,45 25,75 22,100 Z" fill="#4a8c3a" transform="rotate(-5 22 100)" />
+        <path class="grass-blade" d="M37,100 C35,85 36,65 39,45 C42,65 39,85 37,100 Z" fill="#6bab52" transform="rotate(4 37 100)" />
+        <path class="grass-blade" d="M51,100 C48,80 49,55 53,30 C56,55 54,80 51,100 Z" fill="#548f3e" transform="rotate(-4 51 100)" />
+        <path class="grass-blade" d="M64,100 C61,72 62,40 66,10 C69,40 67,72 64,100 Z" fill="#5a9c46" transform="rotate(5 64 100)" />
+      </pattern>
+
+      <symbol id="prop-bush" viewBox="0 0 80 60">
+        <ellipse class="prop-bush__shadow" cx="40" cy="58" rx="30" ry="4" />
+        <g class="prop-bush__foliage">
+          <circle cx="24" cy="38" r="18" />
+          <circle cx="48" cy="30" r="22" />
+          <circle cx="62" cy="40" r="16" />
+          <circle cx="40" cy="44" r="20" />
+        </g>
+        <circle class="prop-bush__accent" cx="30" cy="26" r="5" />
+        <circle class="prop-bush__accent" cx="54" cy="20" r="4" />
+      </symbol>
+
+      <symbol id="prop-fern" viewBox="0 0 60 90">
+        <g class="prop-fern__fronds" fill="none" stroke-linecap="round">
+          <path d="M30,90 C28,65 22,45 10,28" />
+          <path d="M30,90 C29,62 26,40 18,18" />
+          <path d="M30,90 C30,58 30,35 30,10" />
+          <path d="M30,90 C31,62 34,40 42,18" />
+          <path d="M30,90 C32,65 38,45 50,28" />
+        </g>
+      </symbol>
+
+      <symbol id="prop-mushroom" viewBox="0 0 30 34">
+        <ellipse class="prop-mushroom__shadow" cx="15" cy="33" rx="9" ry="2" />
+        <rect class="prop-mushroom__stem" x="12" y="17" width="6" height="15" rx="3" />
+        <path class="prop-mushroom__cap" d="M2,18 C2,8 8,2 15,2 C22,2 28,8 28,18 C28,21 24,21 22,19 C19,22 11,22 8,19 C6,21 2,21 2,18 Z" />
+        <circle class="prop-mushroom__spot" cx="11" cy="10" r="1.6" />
+        <circle class="prop-mushroom__spot" cx="19" cy="8" r="1.4" />
+        <circle class="prop-mushroom__spot" cx="21" cy="13" r="1.2" />
+      </symbol>
+
+      <symbol id="prop-stone" viewBox="0 0 40 24">
+        <ellipse class="prop-stone__shadow" cx="20" cy="23" rx="17" ry="2" />
+        <path class="prop-stone__body" d="M4,20 C1,14 4,7 12,5 C16,1 26,1 31,6 C38,7 39,15 34,19 C30,23 10,23 4,20 Z" />
+        <path class="prop-stone__highlight" d="M10,8 C14,5 20,4 25,6" />
+      </symbol>
+
+      <symbol id="prop-log" viewBox="0 0 90 32">
+        <ellipse class="prop-log__shadow" cx="45" cy="30" rx="40" ry="2.5" />
+        <rect class="prop-log__body" x="6" y="10" width="78" height="16" rx="8" />
+        <ellipse class="prop-log__end" cx="82" cy="18" rx="8" ry="9" />
+        <circle class="prop-log__ring" cx="82" cy="18" r="5.5" />
+        <circle class="prop-log__ring" cx="82" cy="18" r="2.5" />
+      </symbol>
+
     </defs>
   </svg>
 
@@ -243,7 +298,8 @@
           />
         </svg>
         <div class="garden-layer__contents">
-          <!-- Small background plants land here in a future version -->
+          <!-- Version 9: ferns + bushes (generateProps), thin blurred
+               grass fringe (generateGrass) populate this layer -->
         </div>
       </div>
 
@@ -264,8 +320,9 @@
           />
         </svg>
         <div class="garden-layer__contents">
-          <!-- Procedural flowers injected here by generateFlowerField() -->
-          <!-- Small bushes + tiny rocks land here in a future version -->
+          <!-- Version 9: bushes, stones, mushrooms (generateProps) +
+               grass fringe (generateGrass); flowers (generateFlowerField)
+               paint in front of both -->
         </div>
       </div>
 
@@ -288,7 +345,6 @@
           />
         </svg>
         <div class="garden-layer__contents" id="gardenStrip">
-          <!-- Procedural flowers injected here by generateFlowerField() -->
           <div class="creature-layer" id="creatureLayer"></div>
         </div>
       </div>
@@ -311,8 +367,8 @@
           />
         </svg>
         <div class="garden-layer__contents">
-          <!-- Procedural flowers injected here by generateFlowerField() -->
-          <!-- Tall grass lands here in a future version -->
+          <!-- Version 9: tall grass (generateGrass) + a few stones/log
+               (generateProps); flowers (generateFlowerField) paint in front -->
         </div>
       </div>
 
