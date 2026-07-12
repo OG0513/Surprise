@@ -90,7 +90,15 @@ button {
 }
 
 /* =====================================================
-   3. ILLUSTRATED WORLD — Sky + Garden (Version 9: grass + props)
+   3. ILLUSTRATED WORLD — Sky + Garden
+   (Version 10: re-zoned depth layers + Night Mode)
+   -----------------------------------------------------
+   Night is driven by ONE class, `body.is-night`, toggled
+   by applyLightMode() in script.js. Every night-specific
+   rule below hangs off that single class, so everything
+   changes in sync and every property listed has its own
+   `transition`, giving the "gradual, ~1.5-2s" crossfade
+   the brief asked for — nothing snaps instantly.
 ===================================================== */
 .flower-sprite-defs {
   position: absolute;
@@ -112,23 +120,50 @@ button {
   inset: 0;
   overflow: hidden;
   background: linear-gradient(180deg, #bce4f7 0%, #dff3fb 55%, #fdf3e3 100%);
+  transition: background 1.8s ease;
+}
+
+body.is-night .sky {
+  background: linear-gradient(180deg, #0c1730 0%, #1b2856 55%, #2f2856 100%);
 }
 
 .sky::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 78% 12%, var(--ambient-color), transparent 55%);
+  background: radial-gradient(ellipse at 78% 12%, rgba(255, 233, 184, 0.35), transparent 55%);
+  transition: background 1.8s ease;
   pointer-events: none;
 }
 
-.sky__sun {
+body.is-night .sky::after {
+  background: radial-gradient(ellipse at 75% 20%, rgba(160, 170, 255, 0.3), transparent 55%);
+}
+
+.sky__sun,
+.sky__moon {
   position: absolute;
   top: 8%;
   right: 12%;
   width: clamp(90px, 16vw, 170px);
   height: auto;
+  transition: opacity 1.8s ease;
+}
+
+.sky__sun {
   animation: sunPulse 9s ease-in-out infinite;
+}
+
+.sky__moon {
+  opacity: 0;
+}
+
+body.is-night .sky__sun {
+  opacity: 0;
+}
+
+body.is-night .sky__moon {
+  opacity: 1;
 }
 
 @keyframes sunPulse {
@@ -140,6 +175,11 @@ button {
   position: absolute;
   width: clamp(90px, 16vw, 190px);
   height: auto;
+  transition: filter 1.8s ease;
+}
+
+body.is-night .sky__cloud {
+  filter: brightness(0.55) saturate(0.7);
 }
 
 .sky__cloud--1 {
@@ -168,7 +208,46 @@ button {
   50% { transform: translateX(3%); }
 }
 
-/* --- Garden: 4 depth layers --- */
+/* --- Star field (Version 10) --- */
+.sky__stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+  pointer-events: none;
+}
+
+body.is-night .sky__stars {
+  opacity: 1;
+}
+
+.star {
+  position: absolute;
+  width: var(--star-size, 2px);
+  height: var(--star-size, 2px);
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.8);
+  animation: starTwinkle var(--twinkle-duration, 3s) ease-in-out infinite;
+  animation-delay: var(--twinkle-delay, 0s);
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* --- Garden: 4 depth layers ---
+   All 4 now share height:100% of .garden. This is the core
+   fix: depth used to come partly from taller near-layer
+   containers, which meant a near layer's solid ground could
+   physically cover a huge vertical span — including wherever
+   a farther layer's flowers happened to sit. Now every layer
+   occupies the SAME full-height box, and depth comes purely
+   from where each layer's terrain path sits within it (see
+   the re-authored <path> data in index.html): farther layers'
+   ground sits high, near layers' ground sits low, with real
+   vertical clearance between each band. */
 .garden {
   position: absolute;
   left: 0;
@@ -182,9 +261,14 @@ button {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 70% -10%, var(--ambient-color), transparent 60%);
+  background: radial-gradient(ellipse at 70% -10%, rgba(255, 233, 184, 0.35), transparent 60%);
+  transition: background 1.8s ease;
   pointer-events: none;
   z-index: 5;
+}
+
+body.is-night .garden::after {
+  background: radial-gradient(ellipse at 65% -5%, rgba(140, 150, 230, 0.28), transparent 60%);
 }
 
 .garden-layer {
@@ -192,6 +276,7 @@ button {
   left: -6%;
   right: -6%;
   bottom: 0;
+  height: 100%;
 }
 
 .garden-layer__terrain {
@@ -200,18 +285,15 @@ button {
   height: 100%;
 }
 
-.garden-layer--4 { height: 50%; z-index: 1; }
+.garden-layer--4 { z-index: 1; }
 .garden-layer--4 .garden-layer__terrain { filter: blur(4px); }
-/* Version 9: now that Layer 4 has real content (ferns, bushes, grass),
-   this blur gives it the "very soft blur on background vegetation"
-   the depth spec called for — previously this rule had nothing to blur. */
 .garden-layer--4 .garden-layer__contents { filter: blur(2px); }
 
-.garden-layer--3 { height: 62%; z-index: 2; }
+.garden-layer--3 { z-index: 2; }
 
-.garden-layer--2 { height: 78%; z-index: 3; }
+.garden-layer--2 { z-index: 3; }
 
-.garden-layer--1 { height: 92%; z-index: 4; bottom: -4%; }
+.garden-layer--1 { z-index: 4; }
 .garden-layer--1 .garden-layer__terrain { filter: blur(1.2px); }
 .garden-layer--1 .garden-layer__contents { filter: blur(0.6px); }
 
@@ -220,7 +302,7 @@ button {
   inset: 0;
 }
 
-/* --- Procedural flowers (unchanged from Version 8) --- */
+/* --- Procedural flowers (Version 10: glow added) --- */
 .garden-flower {
   position: absolute;
   bottom: 4%;
@@ -257,18 +339,62 @@ button {
 .garden-flower__petal {
   fill: var(--petal-color, #ff8fab);
   opacity: 0.95;
+  transition: filter 1.6s ease;
+}
+
+body.is-night .garden-flower__petal {
+  /* "glow from inside the petals" — brightening + a soft colored
+     shadow directly on the petal shapes themselves, not just a
+     halo sitting behind them */
+  filter: drop-shadow(0 0 5px var(--glow-color, transparent)) brightness(1.15);
 }
 
 .garden-flower__center {
   fill: var(--center-color, #f5c66b);
 }
 
-/* --- Grass (Version 9) ---
-   One reused pattern (see index.html sprite-defs), tiled across a small
-   set of vertical band <rect>s per layer. Each band's transform-delay
-   is staggered by its index (see generateGrass() in script.js), so a
-   wind gust visibly sweeps left-to-right across the field instead of
-   every band snapping to the new angle at once. */
+/* Glow aura — sits behind the petals (painted first within the
+   bloom group). Day: fully invisible. Night: fades in over 1.6s,
+   then pulses continuously and independently per instance via
+   --glow-pulse-duration / --glow-pulse-delay (set in script.js). */
+.garden-flower__glow-wrap {
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+body.is-night .garden-flower__glow-wrap {
+  opacity: 1;
+}
+
+.garden-flower__glow {
+  fill: var(--glow-color, transparent);
+  filter: url(#softGlowBlur);
+  animation: flowerGlowPulse var(--glow-pulse-duration, 3s) ease-in-out infinite;
+  animation-delay: var(--glow-pulse-delay, 0s);
+}
+
+.garden-flower__glow--outer {
+  --glow-pulse-min: 0.12;
+  --glow-pulse-max: 0.38;
+}
+
+.garden-flower__glow--inner {
+  --glow-pulse-min: 0.35;
+  --glow-pulse-max: 0.8;
+}
+
+@keyframes flowerGlowPulse {
+  0%, 100% { opacity: var(--glow-pulse-min, 0.3); }
+  50% { opacity: var(--glow-pulse-max, 0.75); }
+}
+
+/* --- Grass (Version 10: re-zoned heights + night darkening) ---
+   Heights are now a clean 1:2:3:4 ratio (24/48/72/96%), matched by
+   an equal 1:2:3:4 ratio in each grass-strip's own SVG viewBox
+   height (set in script.js) — this keeps individual blades roughly
+   the same apparent size across layers, instead of farther grass
+   stretching taller just because its strip occupies more vertical
+   space. */
 .grass-strip {
   position: absolute;
   left: -6%;
@@ -278,38 +404,33 @@ button {
   pointer-events: none;
 }
 
-.garden-layer--1 .grass-strip { height: 26%; }
-.garden-layer--2 .grass-strip { height: 14%; }
-.garden-layer--3 .grass-strip { height: 11%; }
-.garden-layer--4 .grass-strip { height: 8%; }
+.garden-layer--1 .grass-strip { height: 24%; }
+.garden-layer--2 .grass-strip { height: 48%; }
+.garden-layer--3 .grass-strip { height: 72%; }
+.garden-layer--4 .grass-strip { height: 96%; }
 
 .grass-band {
   fill: url(#grassBladePattern);
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  /* skewX (not rotate) approximates real grass bending — base anchored,
-     tip leaning — and reads as more "blade-like" than a rigid rotation */
   transform: skewX(calc(var(--wind-angle) * var(--grass-sway-mult, 1.3)));
-  transition-property: transform;
+  transition-property: transform, filter;
   transition-timing-function: ease-out;
-  transition-duration: 0.35s;
-  transition-delay: var(--grass-band-delay, 0s);
+  transition-duration: 0.35s, 1.8s;
+  transition-delay: var(--grass-band-delay, 0s), 0s;
 }
 
-/* Sway multiplier + tint per depth layer — "tall grass bends the most"
-   (layer 1 has the highest multiplier of anything in the scene), and
-   atmospheric-perspective tinting (closer = richer, farther = paler)
-   achieved via CSS filter on ONE shared pattern rather than 4 separate
-   pattern definitions. */
 .garden-layer--1 .grass-band { --grass-sway-mult: 1.6; filter: brightness(0.92) saturate(1.15); }
 .garden-layer--2 .grass-band { --grass-sway-mult: 1.3; }
 .garden-layer--3 .grass-band { --grass-sway-mult: 1.05; filter: brightness(1.08) saturate(0.85); }
 .garden-layer--4 .grass-band { --grass-sway-mult: 0.75; filter: brightness(1.2) saturate(0.6); }
 
-/* --- Garden props: bushes, ferns, mushrooms, stones, logs (Version 9) ---
-   Same instancing pattern as flowers: one symbol per species, many
-   lightweight <use> instances. Only bush/fern sway (flexible foliage);
-   mushroom/stone/log stay rigid — solid objects shouldn't move in wind. */
+body.is-night .garden-layer--1 .grass-band { filter: brightness(0.48) saturate(0.9); }
+body.is-night .garden-layer--2 .grass-band { filter: brightness(0.5) saturate(0.85); }
+body.is-night .garden-layer--3 .grass-band { filter: brightness(0.55) saturate(0.75); }
+body.is-night .garden-layer--4 .grass-band { filter: brightness(0.6) saturate(0.6); }
+
+/* --- Garden props: bushes, ferns, mushrooms, stones, logs --- */
 .garden-prop {
   position: absolute;
   bottom: 2%;
@@ -338,7 +459,7 @@ button {
 .prop-fern__fronds {
   stroke: var(--fern-color, #3f7a35);
   stroke-width: 2.5;
-  stroke-dasharray: 1.5 2.5; /* suggests small leaflets along each frond without extra shapes */
+  stroke-dasharray: 1.5 2.5;
 }
 
 .prop-mushroom__cap { fill: var(--mushroom-cap, #d1524a); }
@@ -355,7 +476,7 @@ button {
 .prop-log__ring { fill: none; stroke: rgba(90, 60, 30, 0.35); stroke-width: 1.3; }
 .prop-log__shadow { fill: rgba(60, 45, 30, 0.18); }
 
-/* --- Creature layer: butterflies + fireflies (unchanged from Version 6) --- */
+/* --- Creature layer: butterflies + fireflies --- */
 .creature-layer {
   position: absolute;
   inset: 0 0 20% 0;
@@ -1394,7 +1515,71 @@ button {
 }
 
 /* =====================================================
-   13. RESPONSIVE BREAKPOINTS
+   13. CELESTIAL TOGGLE (Version 10)
+   -----------------------------------------------------
+   The "small optional way back to day." Real <button>,
+   lives outside #world (see the accessibility note in
+   index.html). Low default opacity, brightens on hover/
+   focus so it never competes visually with Start
+   Celebration — this is a quiet secondary control, not
+   primary navigation.
+===================================================== */
+.celestial-toggle {
+  position: fixed;
+  top: clamp(12px, 3vw, 20px);
+  right: clamp(12px, 3vw, 20px);
+  z-index: 15;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-text-dark);
+  opacity: 0.5;
+  box-shadow: 0 4px 14px rgba(120, 90, 90, 0.18);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+}
+
+.celestial-toggle:hover,
+.celestial-toggle:focus-visible {
+  opacity: 1;
+  transform: scale(1.07);
+}
+
+.celestial-toggle:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+.celestial-toggle__sun,
+.celestial-toggle__moon {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  transition: opacity 1.6s ease;
+}
+
+.celestial-toggle__moon {
+  opacity: 0;
+}
+
+body.is-night .celestial-toggle__sun {
+  opacity: 0;
+}
+
+body.is-night .celestial-toggle__moon {
+  opacity: 1;
+}
+
+body.is-night .celestial-toggle {
+  background: rgba(30, 30, 60, 0.55);
+  color: #f4f2ec;
+}
+
+/* =====================================================
+   14. RESPONSIVE BREAKPOINTS
 ===================================================== */
 
 @media (max-width: 359px) {
@@ -1457,7 +1642,12 @@ button {
     height: clamp(160px, 30vh, 260px);
   }
   .sky__sun,
-  .sky__cloud {
+  .sky__cloud,
+  .sky__moon {
     transform: scale(0.8);
+  }
+  .celestial-toggle {
+    width: 40px;
+    height: 40px;
   }
 }
