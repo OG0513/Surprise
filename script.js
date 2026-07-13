@@ -628,12 +628,32 @@ const FLOWER_SPECIES = [
       { petal: '#8069c2' },
     ],
   },
-  {
+ {
     id: 'babysBreath', symbol: 'flower-babys-breath', baseScale: 0.65, baseSway: 1.0,
     glowColor: '#7ff0d4',
     palette: [
       { petal: '#ffffff' },
       { petal: '#fdf0f5' },
+    ],
+  },
+  // Version 12 — ported from the uploaded canvas bouquet, redrawn as
+  // reusable SVG symbols (see flower-lily / flower-hyacinth in index.html)
+  {
+    id: 'lily', symbol: 'flower-lily', baseScale: 1.15, baseSway: 0.5,
+    glowColor: '#ff8a6b',
+    palette: [
+      { petal: '#ff6b4a', center: '#f5c66b' },
+      { petal: '#ff9466', center: '#e0a53a' },
+      { petal: '#ffd166', center: '#c96b3f' },
+    ],
+  },
+  {
+    id: 'hyacinth', symbol: 'flower-hyacinth', baseScale: 0.75, baseSway: 0.9,
+    glowColor: '#9b87ff',
+    palette: [
+      { petal: '#8f7fd6' },
+      { petal: '#6a8fd1' },
+      { petal: '#b98be0' },
     ],
   },
 ];
