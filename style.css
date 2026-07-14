@@ -90,15 +90,15 @@ button {
 }
 
 /* =====================================================
-   3. ILLUSTRATED WORLD — Sky + Garden
-   (Version 10: re-zoned depth layers + Night Mode)
+   3. ILLUSTRATED WORLD — Seamless Sky-to-Meadow (Version 13)
    -----------------------------------------------------
-   Night is driven by ONE class, `body.is-night`, toggled
-   by applyLightMode() in script.js. Every night-specific
-   rule below hangs off that single class, so everything
-   changes in sync and every property listed has its own
-   `transition`, giving the "gradual, ~1.5-2s" crossfade
-   the brief asked for — nothing snaps instantly.
+   One continuous vertical gradient does the entire "sky
+   fading into ground" job — no terrain shapes, no hard
+   horizon line, no depth layers. .meadow is a transparent
+   stage sitting in front of it; grass/flowers/props all
+   live in ONE flat container (.meadow__field), so nothing
+   can be hidden behind a "closer" layer, because there
+   isn't one anymore.
 ===================================================== */
 .flower-sprite-defs {
   position: absolute;
@@ -119,12 +119,30 @@ button {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #bce4f7 0%, #dff3fb 55%, #fdf3e3 100%);
+  /* Six stops = sky blue -> lighter horizon -> lush green, blended with
+     no visible seam. The "ground" color IS this gradient; nothing paints
+     over it anymore. */
+  background: linear-gradient(
+    180deg,
+    #a8d8f0 0%,
+    #c9e8f5 25%,
+    #eef6e8 45%,
+    #d4ecb0 60%,
+    #a3d47e 78%,
+    #6fb85c 100%
+  );
   transition: background 1.8s ease;
 }
 
 body.is-night .sky {
-  background: linear-gradient(180deg, #0c1730 0%, #1b2856 55%, #2f2856 100%);
+  background: linear-gradient(
+    180deg,
+    #03050d 0%,
+    #081428 30%,
+    #0d2038 55%,
+    #122c2a 75%,
+    #16332a 100%
+  );
 }
 
 .sky::after {
@@ -137,7 +155,7 @@ body.is-night .sky {
 }
 
 body.is-night .sky::after {
-  background: radial-gradient(ellipse at 75% 20%, rgba(160, 170, 255, 0.3), transparent 55%);
+  background: radial-gradient(ellipse at 78% 15%, rgba(120, 150, 255, 0.22), transparent 55%);
 }
 
 .sky__sun,
@@ -175,11 +193,12 @@ body.is-night .sky__moon {
   position: absolute;
   width: clamp(90px, 16vw, 190px);
   height: auto;
+  filter: blur(0.6px) brightness(1) saturate(1) hue-rotate(0deg);
   transition: filter 1.8s ease;
 }
 
 body.is-night .sky__cloud {
-  filter: brightness(0.55) saturate(0.7);
+  filter: blur(0.6px) brightness(0.4) saturate(0.55) hue-rotate(10deg);
 }
 
 .sky__cloud--1 {
@@ -203,12 +222,27 @@ body.is-night .sky__cloud {
   animation-delay: -20s;
 }
 
+.sky__cloud--4 {
+  top: 34%;
+  left: 65%;
+  width: clamp(55px, 10vw, 120px);
+  animation: cloudDrift 110s ease-in-out infinite;
+  animation-delay: -45s;
+}
+
+.sky__cloud--5 {
+  top: 4%;
+  left: 68%;
+  width: clamp(50px, 9vw, 105px);
+  animation: cloudDrift 60s ease-in-out infinite reverse;
+  animation-delay: -10s;
+}
+
 @keyframes cloudDrift {
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(3%); }
 }
 
-/* --- Star field (Version 10) --- */
 .sky__stars {
   position: absolute;
   inset: 0;
@@ -237,72 +271,58 @@ body.is-night .sky__stars {
   50% { opacity: 1; }
 }
 
-/* --- Garden: 4 depth layers ---
-   All 4 now share height:100% of .garden. This is the core
-   fix: depth used to come partly from taller near-layer
-   containers, which meant a near layer's solid ground could
-   physically cover a huge vertical span — including wherever
-   a farther layer's flowers happened to sit. Now every layer
-   occupies the SAME full-height box, and depth comes purely
-   from where each layer's terrain path sits within it (see
-   the re-authored <path> data in index.html): farther layers'
-   ground sits high, near layers' ground sits low, with real
-   vertical clearance between each band. */
-.garden {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: clamp(260px, 42vh, 520px);
-  overflow: hidden;
-}
-
-.garden::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 70% -10%, rgba(255, 233, 184, 0.35), transparent 60%);
-  transition: background 1.8s ease;
-  pointer-events: none;
-  z-index: 5;
-}
-
-body.is-night .garden::after {
-  background: radial-gradient(ellipse at 65% -5%, rgba(140, 150, 230, 0.28), transparent 60%);
-}
-
-.garden-layer {
+/* --- Meadow: one flat field, no depth layers --- */
+.meadow {
   position: absolute;
   left: -6%;
   right: -6%;
   bottom: 0;
-  height: 100%;
+  height: clamp(240px, 40vh, 480px);
+  overflow: hidden;
 }
 
-.garden-layer__terrain {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.garden-layer--4 { z-index: 1; }
-.garden-layer--4 .garden-layer__terrain { filter: blur(4px); }
-.garden-layer--4 .garden-layer__contents { filter: blur(2px); }
-
-.garden-layer--3 { z-index: 2; }
-
-.garden-layer--2 { z-index: 3; }
-
-.garden-layer--1 { z-index: 4; }
-.garden-layer--1 .garden-layer__terrain { filter: blur(1.2px); }
-.garden-layer--1 .garden-layer__contents { filter: blur(0.6px); }
-
-.garden-layer__contents {
+.meadow__field {
   position: absolute;
   inset: 0;
 }
 
-/* --- Procedural flowers (Version 10: glow added) --- */
+/* --- Grass: one flat strip, bands of varied height sharing one bottom
+   edge, alternating between the two pattern tiles above --- */
+.grass-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 82%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.grass-band {
+  fill: var(--grass-fill, url(#grassBladePattern));
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: skewX(calc(var(--wind-angle) * var(--grass-sway-mult, 1.2)));
+  transition-property: transform, filter;
+  transition-timing-function: ease-out;
+  transition-duration: 0.35s, 1.8s;
+  transition-delay: var(--grass-band-delay, 0s), 0s;
+  filter:
+    brightness(var(--grass-brightness-day, 1))
+    saturate(var(--grass-saturate-day, 1))
+    hue-rotate(0deg);
+}
+
+body.is-night .grass-band {
+  filter:
+    brightness(calc(var(--grass-brightness-day, 1) * 0.34))
+    saturate(calc(var(--grass-saturate-day, 1) * 0.65))
+    hue-rotate(116deg);
+}
+
+/* --- Procedural flowers (species geometry unchanged since Version 12 —
+   none of this ever depended on layers) --- */
 .garden-flower {
   position: absolute;
   bottom: 4%;
@@ -340,23 +360,17 @@ body.is-night .garden::after {
   fill: var(--petal-color, #ff8fab);
   opacity: 0.95;
   transition: filter 1.6s ease;
+  filter: drop-shadow(0 0 0px transparent) brightness(1);
 }
 
 body.is-night .garden-flower__petal {
-  /* "glow from inside the petals" — brightening + a soft colored
-     shadow directly on the petal shapes themselves, not just a
-     halo sitting behind them */
-  filter: drop-shadow(0 0 5px var(--glow-color, transparent)) brightness(1.15);
+  filter: drop-shadow(0 0 7px var(--glow-color, transparent)) brightness(1.25);
 }
 
 .garden-flower__center {
   fill: var(--center-color, #f5c66b);
 }
 
-/* Glow aura — sits behind the petals (painted first within the
-   bloom group). Day: fully invisible. Night: fades in over 1.6s,
-   then pulses continuously and independently per instance via
-   --glow-pulse-duration / --glow-pulse-delay (set in script.js). */
 .garden-flower__glow-wrap {
   opacity: 0;
   transition: opacity 1.6s ease;
@@ -374,13 +388,13 @@ body.is-night .garden-flower__glow-wrap {
 }
 
 .garden-flower__glow--outer {
-  --glow-pulse-min: 0.12;
-  --glow-pulse-max: 0.38;
+  --glow-pulse-min: 0.18;
+  --glow-pulse-max: 0.5;
 }
 
 .garden-flower__glow--inner {
-  --glow-pulse-min: 0.35;
-  --glow-pulse-max: 0.8;
+  --glow-pulse-min: 0.45;
+  --glow-pulse-max: 0.9;
 }
 
 @keyframes flowerGlowPulse {
@@ -388,57 +402,20 @@ body.is-night .garden-flower__glow-wrap {
   50% { opacity: var(--glow-pulse-max, 0.75); }
 }
 
-/* --- Grass (Version 10: re-zoned heights + night darkening) ---
-   Heights are now a clean 1:2:3:4 ratio (24/48/72/96%), matched by
-   an equal 1:2:3:4 ratio in each grass-strip's own SVG viewBox
-   height (set in script.js) — this keeps individual blades roughly
-   the same apparent size across layers, instead of farther grass
-   stretching taller just because its strip occupies more vertical
-   space. */
-.grass-strip {
-  position: absolute;
-  left: -6%;
-  right: -6%;
-  bottom: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.garden-layer--1 .grass-strip { height: 24%; }
-.garden-layer--2 .grass-strip { height: 48%; }
-.garden-layer--3 .grass-strip { height: 72%; }
-.garden-layer--4 .grass-strip { height: 96%; }
-
-.grass-band {
-  fill: url(#grassBladePattern);
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  transform: skewX(calc(var(--wind-angle) * var(--grass-sway-mult, 1.3)));
-  transition-property: transform, filter;
-  transition-timing-function: ease-out;
-  transition-duration: 0.35s, 1.8s;
-  transition-delay: var(--grass-band-delay, 0s), 0s;
-}
-
-.garden-layer--1 .grass-band { --grass-sway-mult: 1.6; filter: brightness(0.92) saturate(1.15); }
-.garden-layer--2 .grass-band { --grass-sway-mult: 1.3; }
-.garden-layer--3 .grass-band { --grass-sway-mult: 1.05; filter: brightness(1.08) saturate(0.85); }
-.garden-layer--4 .grass-band { --grass-sway-mult: 0.75; filter: brightness(1.2) saturate(0.6); }
-
-body.is-night .garden-layer--1 .grass-band { filter: brightness(0.48) saturate(0.9); }
-body.is-night .garden-layer--2 .grass-band { filter: brightness(0.5) saturate(0.85); }
-body.is-night .garden-layer--3 .grass-band { filter: brightness(0.55) saturate(0.75); }
-body.is-night .garden-layer--4 .grass-band { filter: brightness(0.6) saturate(0.6); }
-
-/* --- Garden props: bushes, ferns, mushrooms, stones, logs --- */
+/* --- Garden props: unchanged, never depended on layers --- */
 .garden-prop {
   position: absolute;
   bottom: 2%;
   height: auto;
   transform-origin: bottom center;
   transform: scale(var(--prop-scale, 1)) rotate(var(--prop-rotation, 0deg));
-  filter: drop-shadow(0 3px 5px rgba(60, 45, 30, 0.15));
+  filter: drop-shadow(0 3px 5px rgba(60, 45, 30, 0.15)) brightness(1) saturate(1) hue-rotate(0deg);
+  transition: filter 1.8s ease;
   pointer-events: none;
+}
+
+body.is-night .garden-prop {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 15, 0.4)) brightness(0.3) saturate(0.55) hue-rotate(112deg);
 }
 
 .garden-prop--sways {
@@ -476,7 +453,7 @@ body.is-night .garden-layer--4 .grass-band { filter: brightness(0.6) saturate(0.
 .prop-log__ring { fill: none; stroke: rgba(90, 60, 30, 0.35); stroke-width: 1.3; }
 .prop-log__shadow { fill: rgba(60, 45, 30, 0.18); }
 
-/* --- Creature layer: butterflies + fireflies --- */
+/* --- Creature layer: butterflies + fireflies (unchanged) --- */
 .creature-layer {
   position: absolute;
   inset: 0 0 20% 0;
@@ -634,10 +611,11 @@ body.is-night .garden-layer--4 .grass-band { filter: brightness(0.6) saturate(0.
 .hero {
   position: relative;
   z-index: 1;
-  width: min(100%, 640px);
+  width: min(100%, 520px); /* Version 13: further reduced (was 580px in V11) */
   text-align: center;
-  padding: var(--space-lg) var(--space-md);
+  padding: var(--space-sm) var(--space-md); /* Version 13: vertical padding trimmed further */
   border-radius: clamp(24px, 4vw, 40px);
+  margin-bottom: clamp(100px, 18vh, 220px);
 
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -1515,14 +1493,7 @@ body.is-night .garden-layer--4 .grass-band { filter: brightness(0.6) saturate(0.
 }
 
 /* =====================================================
-   13. CELESTIAL TOGGLE (Version 10)
-   -----------------------------------------------------
-   The "small optional way back to day." Real <button>,
-   lives outside #world (see the accessibility note in
-   index.html). Low default opacity, brightens on hover/
-   focus so it never competes visually with Start
-   Celebration — this is a quiet secondary control, not
-   primary navigation.
+   13. CELESTIAL TOGGLE
 ===================================================== */
 .celestial-toggle {
   position: fixed;
@@ -1584,7 +1555,7 @@ body.is-night .celestial-toggle {
 
 @media (max-width: 359px) {
   .hero {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-sm) var(--space-sm);
     border-radius: 20px;
   }
 
@@ -1598,20 +1569,20 @@ body.is-night .celestial-toggle {
     margin-inline: auto;
   }
 
-  .garden {
-    height: clamp(210px, 36vh, 380px);
+  .meadow {
+    height: clamp(200px, 34vh, 340px);
   }
 }
 
 @media (min-width: 768px) {
   .hero {
-    padding: var(--space-xl) var(--space-lg);
+    padding: var(--space-sm) var(--space-lg);
   }
 }
 
 @media (min-width: 1200px) {
   .hero {
-    width: min(100%, 720px);
+    width: min(100%, 600px);
   }
 }
 
@@ -1625,6 +1596,7 @@ body.is-night .celestial-toggle {
 @media (max-height: 500px) and (orientation: landscape) {
   .hero {
     padding: var(--space-sm) var(--space-md);
+    margin-bottom: clamp(40px, 12vh, 100px);
   }
   .hero__subtitle {
     margin-bottom: var(--space-md);
@@ -1638,16 +1610,12 @@ body.is-night .celestial-toggle {
   .cake {
     width: min(55%, 220px);
   }
-  .garden {
-    height: clamp(160px, 30vh, 260px);
+  .meadow {
+    height: clamp(140px, 28vh, 220px);
   }
   .sky__sun,
   .sky__cloud,
   .sky__moon {
     transform: scale(0.8);
-  }
-  .celestial-toggle {
-    width: 40px;
-    height: 40px;
   }
 }
