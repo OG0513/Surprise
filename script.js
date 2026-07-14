@@ -1,8 +1,6 @@
 /* =====================================================
    BIRTHDAY WEBSITE — MAIN SCRIPT
-   Version 10: Re-zoned garden depth (flower-hiding fix)
-   + Night Mode (glow flowers, moon/stars, bonus fireflies)
-   triggered by Start Celebration + small day/night toggle
+   Version 13: Seamless single-field meadow (no depth layers)
 ===================================================== */
 
 'use strict';
@@ -30,13 +28,13 @@ const CONFIG = {
   },
 
   environment: {
-    startMode: 'day', // always boots in day; Start Celebration switches to night
+    startMode: 'day',
   },
 
   world: {
     butterflyCount: 2,
-    fireflyCount: 10,       // day baseline — present from the start, unchanged from V6
-    fireflyNightBonus: 20,  // extra fireflies spawned once, the first time night activates (10+20≈3x)
+    fireflyCount: 10,
+    fireflyNightBonus: 20,
   },
 
   confettiPiecesPerBurst: 40,
@@ -70,7 +68,7 @@ const dom = {
   cakeStatusHint: document.getElementById('cakeStatusHint'),
 
   world: document.getElementById('world'),
-  gardenStrip: document.getElementById('gardenStrip'),
+  meadowField: document.getElementById('meadowField'), // Version 13: replaces gardenStrip
   creatureLayer: document.getElementById('creatureLayer'),
 
   celestialToggle: document.getElementById('celestialToggle'),
@@ -131,17 +129,11 @@ function initParticles() {
 
 /* -----------------------------------------------------
    5. START CELEBRATION TRANSITION
-   -----------------------------------------------------
-   Version 10: also switches the environment to night,
-   fired at the same moment the landing card starts fading
-   — so the sky/flowers are already transforming while the
-   experience screen reveals, rather than the two feeling
-   like two separate, disconnected events.
 ----------------------------------------------------- */
 function startCelebration() {
   if (!dom.landing || !dom.experience) return;
 
-  applyLightMode('night'); // Version 10
+  applyLightMode('night');
 
   dom.landing.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
   dom.landing.style.opacity = '0';
@@ -413,13 +405,6 @@ function initCake() {
 
 /* -----------------------------------------------------
    10. ENVIRONMENT SYSTEM — Wind + Light
-   -----------------------------------------------------
-   applyLightMode() toggles a single `is-night` class on
-   <body>, which drives every smooth night-mode transition
-   in style.css (sky, moon/sun, stars, flower glow,
-   grass/cloud darkening). The CSS custom properties below
-   are kept for backward compatibility with anything still
-   reading them.
 ----------------------------------------------------- */
 const WIND_CONFIG = {
   updateIntervalMs: 120,
@@ -509,8 +494,6 @@ function applyLightMode(mode) {
   updateCelestialToggleLabel();
 }
 
-// Exposed so the small celestial toggle button (and anything else) can
-// call this directly.
 function toggleLightMode() {
   applyLightMode(currentLightMode === 'day' ? 'night' : 'day');
 }
@@ -525,7 +508,7 @@ function initEnvironmentSystem() {
 }
 
 /* -----------------------------------------------------
-   11. CELESTIAL TOGGLE — the small "way back to day"
+   11. CELESTIAL TOGGLE
 ----------------------------------------------------- */
 function updateCelestialToggleLabel() {
   if (!dom.celestialToggle) return;
@@ -547,13 +530,12 @@ function initCelestialToggle() {
 }
 
 /* -----------------------------------------------------
-   12. PROCEDURAL FLOWER FIELD
+   12. PROCEDURAL FLOWER FIELD (Version 13: flat field)
    -----------------------------------------------------
-   Species now carry a glowColor (used only at night — see
-   .garden-flower__glow in style.css). FLOWER_LAYER_ZONES
-   matches the re-authored terrain paths in index.html so
-   every flower sits safely above its own layer's ground
-   and safely below the next-nearer layer's ground.
+   No more per-layer loop or zone table. One cluster pass,
+   one continuous bottom% range, with scale correlated
+   continuously to bottom% (lower + slightly bigger =
+   "nearer") rather than via discrete depth tiers.
 ----------------------------------------------------- */
 
 const FLOWER_SPECIES = [
@@ -628,7 +610,7 @@ const FLOWER_SPECIES = [
       { petal: '#8069c2' },
     ],
   },
- {
+  {
     id: 'babysBreath', symbol: 'flower-babys-breath', baseScale: 0.65, baseSway: 1.0,
     glowColor: '#7ff0d4',
     palette: [
@@ -636,8 +618,6 @@ const FLOWER_SPECIES = [
       { petal: '#fdf0f5' },
     ],
   },
-  // Version 12 — ported from the uploaded canvas bouquet, redrawn as
-  // reusable SVG symbols (see flower-lily / flower-hyacinth in index.html)
   {
     id: 'lily', symbol: 'flower-lily', baseScale: 1.15, baseSway: 0.5,
     glowColor: '#ff8a6b',
@@ -658,18 +638,15 @@ const FLOWER_SPECIES = [
   },
 ];
 
-const FLOWER_LAYER_ZONES = {
-  1: { base: 17, jitter: 5 },
-  2: { base: 40, jitter: 4 },
-  3: { base: 63, jitter: 4 },
-};
-
 const FLOWER_FIELD_CONFIG = {
-  layerSplit: { 1: 8, 2: 42, 3: 20 },
-  clusterCount: 7,
+  totalCount: 78,
+  clusterCount: 8,
   clusterSpreadPercent: 9,
   loneFlowerChance: 0.15,
+  edgeBleedChance: 0.06,
   smallScreenMultiplier: 0.65,
+  bottomMin: 3,
+  bottomMax: 32,
 };
 
 function jitterGaussianish(spread) {
@@ -694,29 +671,35 @@ function pickFlowerLeftPercent(clusterCenters) {
   return center + jitterGaussianish(FLOWER_FIELD_CONFIG.clusterSpreadPercent);
 }
 
-function createFlowerInstance(layerNumber, clusterCenters) {
+function createFlowerInstance(clusterCenters) {
   const species = FLOWER_SPECIES[Math.floor(Math.random() * FLOWER_SPECIES.length)];
   const colorway = species.palette[Math.floor(Math.random() * species.palette.length)];
 
   let leftPercent = pickFlowerLeftPercent(clusterCenters);
-  const minLeft = layerNumber === 1 ? -8 : 1;
-  const maxLeft = layerNumber === 1 ? 108 : 99;
+  const bleedsEdge = Math.random() < FLOWER_FIELD_CONFIG.edgeBleedChance;
+  const minLeft = bleedsEdge ? -6 : 1;
+  const maxLeft = bleedsEdge ? 106 : 99;
   leftPercent = Math.min(maxLeft, Math.max(minLeft, leftPercent));
 
-  const layerScale = layerNumber === 1 ? 1.5 : layerNumber === 3 ? 0.55 : 1;
-  const scale = species.baseScale * layerScale * (0.75 + Math.random() * 0.5);
+  const bottomPercent = FLOWER_FIELD_CONFIG.bottomMin +
+    Math.random() * (FLOWER_FIELD_CONFIG.bottomMax - FLOWER_FIELD_CONFIG.bottomMin);
+
+  // One continuous "lower + a bit bigger = nearer" relationship — a single
+  // smooth formula, not discrete depth tiers.
+  const depthFactor = 1 - (bottomPercent - FLOWER_FIELD_CONFIG.bottomMin) /
+    (FLOWER_FIELD_CONFIG.bottomMax - FLOWER_FIELD_CONFIG.bottomMin);
+  const scale = species.baseScale * (0.78 + depthFactor * 0.5) * (0.85 + Math.random() * 0.35);
 
   const sizeFactor = Math.min(1.4, Math.max(0.6, scale));
   const swayMult = (species.baseSway / sizeFactor) * (0.85 + Math.random() * 0.3);
 
-  const zone = FLOWER_LAYER_ZONES[layerNumber] || FLOWER_LAYER_ZONES[2];
-  const bottomPercent = zone.base + (Math.random() * zone.jitter * 2 - zone.jitter);
+  const bloomRotation = (Math.random() * 34 - 17).toFixed(1);
+  const stemLean = (Math.random() * 16 - 8).toFixed(1);
 
-  const bloomRotation = (Math.random() * 30 - 15).toFixed(1);
-  const stemLean = (Math.random() * 14 - 7).toFixed(1);
-
-  const transitionDelay = (Math.random() * 0.5).toFixed(2);
-  const transitionDuration = (0.25 + Math.random() * 0.3).toFixed(2);
+  // Wider spread than before, so the field reads as less synchronized
+  // when a wind gust passes through.
+  const transitionDelay = (Math.random() * 0.8).toFixed(2);
+  const transitionDuration = (0.22 + Math.random() * 0.45).toFixed(2);
 
   const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   el.setAttribute('viewBox', '0 0 40 100');
@@ -749,71 +732,76 @@ function createFlowerInstance(layerNumber, clusterCenters) {
 }
 
 function generateFlowerField() {
+  if (!dom.meadowField) return;
+
   const isSmallScreen = window.innerWidth < 480;
   const multiplier = isSmallScreen ? FLOWER_FIELD_CONFIG.smallScreenMultiplier : 1;
+  const count = Math.round(FLOWER_FIELD_CONFIG.totalCount * multiplier);
   const clusterCenters = buildClusterCenters(FLOWER_FIELD_CONFIG.clusterCount);
 
-  Object.entries(FLOWER_FIELD_CONFIG.layerSplit).forEach(([layerNumber, baseCount]) => {
-    const container = document.querySelector(`.garden-layer--${layerNumber} .garden-layer__contents`);
-    if (!container) return;
-
-    const count = Math.round(baseCount * multiplier);
-    const fragment = document.createDocumentFragment();
-
-    for (let i = 0; i < count; i++) {
-      fragment.appendChild(createFlowerInstance(Number(layerNumber), clusterCenters));
-    }
-
-    container.appendChild(fragment);
-  });
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < count; i++) {
+    fragment.appendChild(createFlowerInstance(clusterCenters));
+  }
+  dom.meadowField.appendChild(fragment);
 }
 
 /* -----------------------------------------------------
-   13. PROCEDURAL GRASS FIELD
+   13. PROCEDURAL GRASS FIELD (Version 13: one flat strip)
    -----------------------------------------------------
-   Each layer's grass-strip now uses its OWN viewBox height
-   (100/200/300/400, matching the 24/48/72/96% CSS heights
-   in style.css — an exact 1:2:3:4 ratio both ways). Since
-   the shared pattern tile is always 100 "pattern units"
-   tall regardless of viewBox, a taller viewBox makes that
-   same tile occupy a smaller fraction of it — which, paired
-   with the proportionally taller CSS box, keeps individual
-   blades roughly the same apparent pixel size across all 4
-   layers instead of farther grass stretching taller just
-   because its strip is bigger.
+   ONE svg, ONE shared bottom edge. Each band's height is
+   independently randomized (anchored to the same bottom),
+   which is what creates natural clumping — no separate
+   depth-tier strips anymore. Fill alternates between the
+   two pattern tiles so no single motif repeats
+   uninterrupted across the whole width.
 ----------------------------------------------------- */
 
 const GRASS_CONFIG = {
-  layers: [
-    { layer: 1, bandCount: 14, viewBoxHeight: 100 },
-    { layer: 2, bandCount: 12, viewBoxHeight: 200 },
-    { layer: 3, bandCount: 10, viewBoxHeight: 300 },
-    { layer: 4, bandCount: 8,  viewBoxHeight: 400 },
-  ],
-  maxStaggerSeconds: 0.6,
+  bandCount: 32,
+  viewBoxWidth: 1000,
+  viewBoxHeight: 400,
+  minBandHeightFraction: 0.55,
+  maxStaggerSeconds: 0.9,
   smallScreenBandMultiplier: 0.7,
 };
 
-function createGrassStrip(bandCount, viewBoxHeight) {
+function createGrassStrip(bandCount) {
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
   svg.classList.add('grass-strip');
-  svg.setAttribute('viewBox', `0 0 1000 ${viewBoxHeight}`);
+  svg.setAttribute('viewBox', `0 0 ${GRASS_CONFIG.viewBoxWidth} ${GRASS_CONFIG.viewBoxHeight}`);
   svg.setAttribute('preserveAspectRatio', 'none');
   svg.setAttribute('focusable', 'false');
 
-  const bandWidth = 1000 / bandCount;
+  const slotWidth = GRASS_CONFIG.viewBoxWidth / bandCount;
 
   for (let i = 0; i < bandCount; i++) {
     const band = document.createElementNS(svgNS, 'rect');
-    band.setAttribute('x', (i * bandWidth).toFixed(2));
-    band.setAttribute('y', '0');
-    band.setAttribute('width', bandWidth.toFixed(2));
-    band.setAttribute('height', String(viewBoxHeight));
+
+    const widthJitter = 1 + (Math.random() * 0.3 - 0.15);
+    const width = slotWidth * widthJitter;
+    const x = i * slotWidth - (width - slotWidth) / 2;
+
+    const heightFraction = GRASS_CONFIG.minBandHeightFraction +
+      Math.random() * (1 - GRASS_CONFIG.minBandHeightFraction);
+    const height = GRASS_CONFIG.viewBoxHeight * heightFraction;
+    const y = GRASS_CONFIG.viewBoxHeight - height;
+
+    band.setAttribute('x', x.toFixed(2));
+    band.setAttribute('y', y.toFixed(2));
+    band.setAttribute('width', width.toFixed(2));
+    band.setAttribute('height', height.toFixed(2));
     band.classList.add('grass-band');
+
+    const patternId = Math.random() < 0.5 ? 'grassBladePattern' : 'grassBladePattern2';
+    band.style.setProperty('--grass-fill', `url(#${patternId})`);
 
     const delay = (i / bandCount) * GRASS_CONFIG.maxStaggerSeconds;
     band.style.setProperty('--grass-band-delay', `${delay.toFixed(3)}s`);
+    band.style.setProperty('--grass-sway-mult', (0.9 + Math.random() * 0.7).toFixed(2));
+    band.style.setProperty('--grass-brightness-day', (0.85 + Math.random() * 0.35).toFixed(2));
+    band.style.setProperty('--grass-saturate-day', (0.8 + Math.random() * 0.35).toFixed(2));
 
     svg.appendChild(band);
   }
@@ -822,29 +810,19 @@ function createGrassStrip(bandCount, viewBoxHeight) {
 }
 
 function generateGrass() {
+  if (!dom.meadowField) return;
+
   const isSmallScreen = window.innerWidth < 480;
+  const bandCount = isSmallScreen
+    ? Math.max(10, Math.round(GRASS_CONFIG.bandCount * GRASS_CONFIG.smallScreenBandMultiplier))
+    : GRASS_CONFIG.bandCount;
 
-  GRASS_CONFIG.layers.forEach(({ layer, bandCount, viewBoxHeight }) => {
-    const container = document.querySelector(`.garden-layer--${layer} .garden-layer__contents`);
-    if (!container) return;
-
-    const adjustedCount = isSmallScreen
-      ? Math.max(4, Math.round(bandCount * GRASS_CONFIG.smallScreenBandMultiplier))
-      : bandCount;
-
-    const strip = createGrassStrip(adjustedCount, viewBoxHeight);
-    container.insertBefore(strip, container.firstChild);
-  });
+  const strip = createGrassStrip(bandCount);
+  dom.meadowField.insertBefore(strip, dom.meadowField.firstChild);
 }
 
 /* -----------------------------------------------------
-   14. PROCEDURAL GARDEN PROPS
-   -----------------------------------------------------
-   Bushes, ferns, mushrooms, stones, logs — same reused-
-   symbol / lightweight-<use> pattern as flowers and grass.
-   PROP_LAYER_ZONES matches the same re-zoned terrain bands
-   the flowers now use, so props also stay clear of the
-   ground shapes.
+   14. PROCEDURAL GARDEN PROPS (Version 13: flat field)
 ----------------------------------------------------- */
 
 function pick(arr) {
@@ -880,22 +858,20 @@ const PROP_SPECIES = {
   },
 };
 
-const PROP_LAYER_ZONES = {
-  1: { base: 5, jitter: 3 },
-  3: { base: 10, jitter: 5 },
-  4: { base: 8, jitter: 5 },
-};
-
 const PROP_FIELD_CONFIG = {
-  layerProps: {
-    1: [{ species: 'stone', count: 3 }, { species: 'log', count: 1 }],
-    3: [{ species: 'bush', count: 6 }, { species: 'stone', count: 5 }, { species: 'mushroom', count: 4 }],
-    4: [{ species: 'fern', count: 8 }, { species: 'bush', count: 4 }],
-  },
+  species: [
+    { species: 'bush', count: 9 },
+    { species: 'fern', count: 8 },
+    { species: 'mushroom', count: 4 },
+    { species: 'stone', count: 8 },
+    { species: 'log', count: 2 },
+  ],
+  bottomBase: 5,
+  bottomJitter: 5,
   smallScreenMultiplier: 0.6,
 };
 
-function createPropInstance(speciesKey, layerNumber) {
+function createPropInstance(speciesKey) {
   const species = PROP_SPECIES[speciesKey];
   const [, , vbWidth, vbHeight] = species.viewBox;
 
@@ -906,8 +882,8 @@ function createPropInstance(speciesKey, layerNumber) {
   if (species.sways) el.classList.add('garden-prop--sways');
 
   const leftPercent = Math.random() * 100;
-  const zone = PROP_LAYER_ZONES[layerNumber] || { base: 5, jitter: 3 };
-  const bottomPercent = Math.max(0.5, zone.base + (Math.random() * zone.jitter * 2 - zone.jitter));
+  const bottomPercent = Math.max(0.5,
+    PROP_FIELD_CONFIG.bottomBase + (Math.random() * PROP_FIELD_CONFIG.bottomJitter * 2 - PROP_FIELD_CONFIG.bottomJitter));
   const scale = 0.75 + Math.random() * 0.6;
   const rotation = species.sways ? 0 : (Math.random() * 8 - 4);
 
@@ -937,33 +913,26 @@ function createPropInstance(speciesKey, layerNumber) {
 }
 
 function generateProps() {
+  if (!dom.meadowField) return;
+
   const isSmallScreen = window.innerWidth < 480;
   const multiplier = isSmallScreen ? PROP_FIELD_CONFIG.smallScreenMultiplier : 1;
 
-  Object.entries(PROP_FIELD_CONFIG.layerProps).forEach(([layerNumber, speciesList]) => {
-    const container = document.querySelector(`.garden-layer--${layerNumber} .garden-layer__contents`);
-    if (!container) return;
-
-    const fragment = document.createDocumentFragment();
-    speciesList.forEach(({ species, count }) => {
-      const adjustedCount = Math.max(1, Math.round(count * multiplier));
-      for (let i = 0; i < adjustedCount; i++) {
-        fragment.appendChild(createPropInstance(species, Number(layerNumber)));
-      }
-    });
-
-    container.appendChild(fragment);
+  const fragment = document.createDocumentFragment();
+  PROP_FIELD_CONFIG.species.forEach(({ species, count }) => {
+    const adjustedCount = Math.max(1, Math.round(count * multiplier));
+    for (let i = 0; i < adjustedCount; i++) {
+      fragment.appendChild(createPropInstance(species));
+    }
   });
+  dom.meadowField.appendChild(fragment);
 }
 
 /* -----------------------------------------------------
    15. ILLUSTRATED WORLD — Butterflies + Fireflies
    -----------------------------------------------------
-   Butterflies unchanged from Version 6 — still no flower-
-   seeking behavior (flagged honestly in the message above,
-   still deferred). Fireflies now split into a shared
-   spawnFireflies() helper so the day-mode baseline batch
-   and the one-time night bonus batch never duplicate logic.
+   Entirely unchanged — bounds come from #creatureLayer's
+   own box, which never depended on the layer system.
 ----------------------------------------------------- */
 
 function getCreatureLayerBounds() {
@@ -1098,11 +1067,6 @@ function scheduleFireflyMove(el, prefersReducedMotion) {
   window.setTimeout(() => scheduleFireflyMove(el, prefersReducedMotion), totalDelay);
 }
 
-/**
- * Spawns `count` fireflies into the creature layer. Shared by both the
- * initial day-mode population and the one-time night bonus batch, so
- * the two never drift into duplicated logic.
- */
 function spawnFireflies(count) {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!dom.creatureLayer) return;
@@ -1131,12 +1095,6 @@ function initFireflies() {
   spawnFireflies(count);
 }
 
-/**
- * Called once, the first time night mode activates (see applyLightMode
- * in §10 — fired either by Start Celebration or the celestial toggle).
- * Adds the "fireflies increase ~3x at night" bonus batch additively, on
- * top of whatever's already flying — existing fireflies never restart.
- */
 function ensureNightFireflies() {
   const isSmallScreen = window.innerWidth < 480;
   const bonus = isSmallScreen
@@ -1177,7 +1135,7 @@ function init() {
   initGiftBoxes();
   initCake();
   initEnvironmentSystem();
-  initCelestialToggle();  // Version 10
+  initCelestialToggle();
   generateGrass();
   generateProps();
   generateFlowerField();
