@@ -13,7 +13,6 @@ const CONFIG = {
   name: 'Beautiful',
   subtitle: "Today the world gets a little brighter — because it's your day. 🎂",
   particleCount: 22,
-
   card: {
     message:
       "Wishing you a day filled with warm light, soft laughter, and every " +
@@ -536,102 +535,106 @@ function initCelestialToggle() {
    independent sway phase, proximity grass overlap)
 ----------------------------------------------------- */
 
+// Version 15: every colorway now has `petal` (day — soft, natural, no
+// glow) AND `petalNight` (the vivid neon color from Version 14, now
+// used ONLY at night). `center` is left as-is; it was already mostly
+// natural (browns/golds), not part of the "neon" problem.
 const FLOWER_SPECIES = [
   {
     id: 'wildflower', symbol: 'flower-wildflower', baseScale: 1.0, baseSway: 0.7,
     glowColor: '#ff3fa0',
     palette: [
-      { petal: '#ff3fa0', center: '#ffe14d' },
-      { petal: '#b24dff', center: '#fff8f2' },
-      { petal: '#ffcf1f', center: '#ff3fa0' },
+      { petal: '#ffb6d9', petalNight: '#ff3fa0', center: '#ffe14d' },
+      { petal: '#dcc7f7', petalNight: '#b24dff', center: '#fff8f2' },
+      { petal: '#ffe28a', petalNight: '#ffcf1f', center: '#ff3fa0' },
     ],
   },
   {
     id: 'rose', symbol: 'flower-rose', baseScale: 1.05, baseSway: 0.45,
     glowColor: '#ff1f6d',
     palette: [
-      { petal: '#ff1f6d' },
-      { petal: '#ff3d81' },
-      { petal: '#e0177a' },
-      { petal: '#ff5fa8' },
+      { petal: '#f4b0c4', petalNight: '#ff1f6d' },
+      { petal: '#f7bcd0', petalNight: '#ff3d81' },
+      { petal: '#eda3bd', petalNight: '#e0177a' },
+      { petal: '#f9c8da', petalNight: '#ff5fa8' },
     ],
   },
   {
     id: 'tulip', symbol: 'flower-tulip', baseScale: 1.1, baseSway: 0.5,
     glowColor: '#c14dff',
     palette: [
-      { petal: '#ff2e88', center: '#c9436b' },
-      { petal: '#ffb020', center: '#e0a53a' },
-      { petal: '#b24dff', center: '#8a5cc4' },
-      { petal: '#2ea6ff', center: '#1f7fc9' },
+      { petal: '#ffc2d9', petalNight: '#ff2e88', center: '#c9436b' },
+      { petal: '#ffdca3', petalNight: '#ffb020', center: '#e0a53a' },
+      { petal: '#d9c2f5', petalNight: '#b24dff', center: '#8a5cc4' },
+      { petal: '#bfe0f7', petalNight: '#2ea6ff', center: '#1f7fc9' },
     ],
   },
   {
     id: 'daisy', symbol: 'flower-daisy', baseScale: 0.85, baseSway: 0.8,
     glowColor: '#5ff2ff',
     palette: [
-      { petal: '#ffffff', center: '#ffd400' },
-      { petal: '#eafcff', center: '#ffb020' },
+      { petal: '#fffdf7', petalNight: '#ffffff', center: '#ffd400' },
+      { petal: '#fdf4e8', petalNight: '#eafcff', center: '#ffb020' },
     ],
   },
   {
     id: 'sunflower', symbol: 'flower-sunflower', baseScale: 1.4, baseSway: 0.35,
     glowColor: '#ffd400',
     palette: [
-      { petal: '#ffd400', center: '#7a5230' },
-      { petal: '#ffb020', center: '#6b431f' },
+      { petal: '#f2c14e', petalNight: '#ffd400', center: '#7a5230' },
+      { petal: '#eebb5a', petalNight: '#ffb020', center: '#6b431f' },
     ],
   },
   {
     id: 'bluebell', symbol: 'flower-bluebell', baseScale: 0.8, baseSway: 0.85,
     glowColor: '#2ea6ff',
     palette: [
-      { petal: '#2ea6ff' },
-      { petal: '#7a5cff' },
-      { petal: '#4fc3ff' },
+      { petal: '#a8d4f5', petalNight: '#2ea6ff' },
+      { petal: '#c2b8f0', petalNight: '#7a5cff' },
+      { petal: '#b3ddf7', petalNight: '#4fc3ff' },
     ],
   },
   {
     id: 'poppy', symbol: 'flower-poppy', baseScale: 1.1, baseSway: 0.55,
     glowColor: '#ff5a1f',
     palette: [
-      { petal: '#ff3b1f', center: '#241238' },
-      { petal: '#ff6a00', center: '#241238' },
+      { petal: '#f2917a', petalNight: '#ff3b1f', center: '#241238' },
+      { petal: '#f0a668', petalNight: '#ff6a00', center: '#241238' },
     ],
   },
   {
     id: 'lavender', symbol: 'flower-lavender', baseScale: 0.9, baseSway: 0.9,
     glowColor: '#b48aff',
     palette: [
-      { petal: '#b48aff' },
-      { petal: '#c9a3ff' },
-      { petal: '#9166e0' },
+      { petal: '#d9c6f5', petalNight: '#b48aff' },
+      { petal: '#e0d3f7', petalNight: '#c9a3ff' },
+      { petal: '#c9b3e8', petalNight: '#9166e0' },
     ],
   },
   {
     id: 'babysBreath', symbol: 'flower-babys-breath', baseScale: 0.65, baseSway: 1.0,
     glowColor: '#7ff0e0',
     palette: [
-      { petal: '#ffffff' },
-      { petal: '#eafcff' },
+      { petal: '#ffffff', petalNight: '#ffffff' },
+      { petal: '#fdf0f5', petalNight: '#eafcff' },
     ],
   },
   {
     id: 'lily', symbol: 'flower-lily', baseScale: 1.15, baseSway: 0.5,
     glowColor: '#ff8a2e',
     palette: [
-      { petal: '#ff6a1f', center: '#ffd400' },
-      { petal: '#ffb020', center: '#e0a53a' },
-      { petal: '#ff3fa0', center: '#ffd400' },
+      { petal: '#f5a880', petalNight: '#ff6a1f', center: '#ffd400' },
+      { petal: '#f0c98a', petalNight: '#ffb020', center: '#e0a53a' },
+      { petal: '#f5a8c4', petalNight: '#ff3fa0', center: '#ffd400' },
     ],
   },
   {
     id: 'hyacinth', symbol: 'flower-hyacinth', baseScale: 0.75, baseSway: 0.9,
     glowColor: '#7a5cff',
     palette: [
-      { petal: '#7a5cff' },
-      { petal: '#2ea6ff' },
-      { petal: '#b24dff' },
+      { petal: '#c2b8f0', petalNight: '#7a5cff' },
+      { petal: '#a8d4f5', petalNight: '#2ea6ff' },
+      { petal: '#d9c2f5', petalNight: '#b24dff' },
     ],
   },
 ];
