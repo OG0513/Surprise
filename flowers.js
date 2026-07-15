@@ -41,6 +41,87 @@ function lighten(hex, factor) {
   return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
+// ── DRAW LEAF ────────────────────────────────────────────────────────────────
+function drawLeaf(x, y, angle, size, color, alpha) {
+  if (alpha <= 0) return;
+  gardenCtx.save();
+  gardenCtx.translate(x, y);
+  gardenCtx.rotate(angle);
+  gardenCtx.globalAlpha = alpha;
+
+  gardenCtx.beginPath();
+  gardenCtx.moveTo(0, 0);
+  gardenCtx.bezierCurveTo(-size*0.4, -size*0.5, -size*0.3, -size, 0, -size*1.1);
+  gardenCtx.bezierCurveTo( size*0.3, -size, size*0.4, -size*0.5, 0, 0);
+  gardenCtx.closePath();
+
+  const lg = gardenCtx.createLinearGradient(0, 0, 0, -size*1.1);
+  lg.addColorStop(0, 'rgba(10,80,10,0.9)');
+  lg.addColorStop(0.4, rgba(color, 0.92));
+  lg.addColorStop(1, rgba(color, 0.7));
+  gardenCtx.fillStyle = lg;
+  gardenCtx.shadowColor = color;
+  gardenCtx.shadowBlur = 8;
+  gardenCtx.fill();
+
+  gardenCtx.globalAlpha = 1;
+  gardenCtx.restore();
+}
+
+// ── DRAW STEM ───────────────────────────────────────────────────────────
+function drawStem(x, y, height, color, alpha) {
+  if (alpha <= 0) return;
+  gardenCtx.save();
+  gardenCtx.globalAlpha = alpha;
+  
+  // Curved stem
+  const curve = height * 0.15 * (Math.random() - 0.5);
+  gardenCtx.beginPath();
+  gardenCtx.moveTo(x, y);
+  gardenCtx.quadraticCurveTo(x + curve, y - height*0.5, x + curve*0.5, y - height);
+  gardenCtx.strokeStyle = 'rgba(46, 184, 0, 0.8)';
+  gardenCtx.lineWidth = 2;
+  gardenCtx.shadowColor = '#2eb800';
+  gardenCtx.shadowBlur = 6;
+  gardenCtx.stroke();
+  
+  // Leaves along stem
+  for (let i = 0.3; i < 1; i += 0.35) {
+    const lx = x + curve * i;
+    const ly = y - height * i;
+    const leafSide = i % 2 === 0 ? 1 : -1;
+    drawLeaf(lx, ly, Math.PI/2 * leafSide + 0.3, height*0.08, '#00cc44', alpha*0.7);
+  }
+  
+  gardenCtx.restore();
+}
+
+// ── DRAW GRASS BLADE ───────────────────────────────────────────────────
+function drawGrassBlade(x, y, height, lean, alpha) {
+  if (alpha <= 0) return;
+  gardenCtx.save();
+  gardenCtx.globalAlpha = alpha;
+  gardenCtx.translate(x, y);
+  gardenCtx.rotate(lean);
+  
+  gardenCtx.beginPath();
+  gardenCtx.moveTo(0, 0);
+  gardenCtx.bezierCurveTo(-height*0.08, -height*0.3, -height*0.05, -height*0.7, 0, -height);
+  gardenCtx.bezierCurveTo(height*0.05, -height*0.7, height*0.08, -height*0.3, 0, 0);
+  gardenCtx.closePath();
+  
+  const lg = gardenCtx.createLinearGradient(0, 0, 0, -height);
+  lg.addColorStop(0, 'rgba(30, 120, 30, 0.9)');
+  lg.addColorStop(0.5, 'rgba(60, 180, 60, 0.8)');
+  lg.addColorStop(1, 'rgba(90, 220, 90, 0.7)');
+  gardenCtx.fillStyle = lg;
+  gardenCtx.shadowColor = '#3aff00';
+  gardenCtx.shadowBlur = 4;
+  gardenCtx.fill();
+  
+  gardenCtx.restore();
+}
+
 // ── FLOWER DRAWERS ──────────────────────────────────────────────────────
 function drawRose(cx, cy, r, color, bloom) {
   if (bloom <= 0) return;
@@ -68,7 +149,7 @@ function drawRose(cx, cy, r, color, bloom) {
       gardenCtx.ellipse(0, 0, r*layer.rx, r*layer.ry, 0, 0, Math.PI*2);
       gardenCtx.fillStyle = rgba(layer.col, layer.alpha * layerAlpha);
       gardenCtx.shadowColor = color;
-      gardenCtx.shadowBlur  = 18;
+      gardenCtx.shadowBlur  = 12;
       gardenCtx.fill();
       gardenCtx.restore();
     }
@@ -80,7 +161,7 @@ function drawRose(cx, cy, r, color, bloom) {
   cg.addColorStop(1, darken(color, 0.4));
   gardenCtx.fillStyle = cg;
   gardenCtx.shadowColor = lighten(color,0.6);
-  gardenCtx.shadowBlur  = 20;
+  gardenCtx.shadowBlur  = 14;
   gardenCtx.fill();
 }
 
@@ -106,14 +187,8 @@ function drawTulip(cx, cy, r, color, bloom) {
     gardenCtx.bezierCurveTo( r*0.35, -r*1.1, r*0.4, -r*0.5,  0,  0);
     gardenCtx.fillStyle = rgba(p.col, 0.92);
     gardenCtx.shadowColor = color;
-    gardenCtx.shadowBlur  = 22;
+    gardenCtx.shadowBlur  = 16;
     gardenCtx.fill();
-    gardenCtx.beginPath();
-    gardenCtx.moveTo(0, -r*0.1);
-    gardenCtx.bezierCurveTo(-r*0.05, -r*0.5, -r*0.03, -r*0.95, 0, -r*1.1);
-    gardenCtx.strokeStyle = rgba(lighten(color, 0.6), 0.4);
-    gardenCtx.lineWidth = r*0.06;
-    gardenCtx.stroke();
     gardenCtx.restore();
   }
   gardenCtx.restore();
@@ -125,7 +200,7 @@ function drawSunflower(cx, cy, r, bloom) {
   gardenCtx.save();
   gardenCtx.translate(cx, cy);
   gardenCtx.scale(scale, scale);
-  const n = 20;
+  const n = 16;
   for (let i = 0; i < n; i++) {
     const angle = (i/n)*Math.PI*2;
     gardenCtx.save();
@@ -138,17 +213,7 @@ function drawSunflower(cx, cy, r, bloom) {
     lg.addColorStop(1, 'rgba(255,240,80,0.8)');
     gardenCtx.fillStyle = lg;
     gardenCtx.shadowColor = '#ffcc00';
-    gardenCtx.shadowBlur  = 20;
-    gardenCtx.fill();
-    gardenCtx.restore();
-  }
-  for (let i = 0; i < n; i++) {
-    const angle = (i/n)*Math.PI*2 + Math.PI/n;
-    gardenCtx.save();
-    gardenCtx.rotate(angle);
-    gardenCtx.beginPath();
-    gardenCtx.ellipse(0, -r*0.60, r*0.10, r*0.28, 0, 0, Math.PI*2);
-    gardenCtx.fillStyle = 'rgba(255,160,0,0.7)';
+    gardenCtx.shadowBlur  = 14;
     gardenCtx.fill();
     gardenCtx.restore();
   }
@@ -160,18 +225,8 @@ function drawSunflower(cx, cy, r, bloom) {
   gardenCtx.arc(0, 0, r*0.36, 0, Math.PI*2);
   gardenCtx.fillStyle = dg;
   gardenCtx.shadowColor = '#ff8800';
-  gardenCtx.shadowBlur  = 15;
+  gardenCtx.shadowBlur  = 12;
   gardenCtx.fill();
-  for (let i = 0; i < 24; i++) {
-    const a = (i/24)*Math.PI*2;
-    for (let rr = 0.05; rr < 0.35; rr += 0.08) {
-      gardenCtx.beginPath();
-      gardenCtx.arc(r*rr*Math.cos(a), r*rr*Math.sin(a), r*0.025, 0, Math.PI*2);
-      gardenCtx.fillStyle = 'rgba(60,20,0,0.5)';
-      gardenCtx.shadowBlur = 0;
-      gardenCtx.fill();
-    }
-  }
   gardenCtx.restore();
 }
 
@@ -181,7 +236,7 @@ function drawDaisy(cx, cy, r, color, bloom) {
   gardenCtx.save();
   gardenCtx.translate(cx, cy);
   gardenCtx.scale(scale, scale);
-  const n = 16;
+  const n = 14;
   for (let i = 0; i < n; i++) {
     const angle = (i/n)*Math.PI*2;
     gardenCtx.save();
@@ -190,7 +245,7 @@ function drawDaisy(cx, cy, r, color, bloom) {
     gardenCtx.ellipse(0, -r*0.58, r*0.10, r*0.32, 0, 0, Math.PI*2);
     gardenCtx.fillStyle = rgba(color, 0.95);
     gardenCtx.shadowColor = color;
-    gardenCtx.shadowBlur  = 18;
+    gardenCtx.shadowBlur  = 14;
     gardenCtx.fill();
     gardenCtx.restore();
   }
@@ -202,7 +257,7 @@ function drawDaisy(cx, cy, r, color, bloom) {
   gardenCtx.arc(0, 0, r*0.28, 0, Math.PI*2);
   gardenCtx.fillStyle = cg;
   gardenCtx.shadowColor = '#ffdd00';
-  gardenCtx.shadowBlur  = 22;
+  gardenCtx.shadowBlur  = 16;
   gardenCtx.fill();
   gardenCtx.restore();
 }
@@ -228,35 +283,9 @@ function drawLily(cx, cy, r, color, bloom) {
     pg.addColorStop(1, rgba(lighten(color,0.45), 0.85));
     gardenCtx.fillStyle = pg;
     gardenCtx.shadowColor = color;
-    gardenCtx.shadowBlur  = 22;
+    gardenCtx.shadowBlur  = 16;
     gardenCtx.fill();
-    for (let s = 0; s < 5; s++) {
-      const st = 0.3 + s*0.12;
-      gardenCtx.beginPath();
-      gardenCtx.arc(0, -r*st, r*0.03, 0, Math.PI*2);
-      gardenCtx.fillStyle = rgba(darken(color,0.6), 0.5);
-      gardenCtx.shadowBlur = 0;
-      gardenCtx.fill();
-    }
     gardenCtx.restore();
-  }
-  for (let i = 0; i < 6; i++) {
-    const a = (i/6)*Math.PI*2;
-    const sx = r*0.25*Math.cos(a), sy = r*0.25*Math.sin(a);
-    gardenCtx.beginPath();
-    gardenCtx.moveTo(0, 0);
-    gardenCtx.lineTo(sx, sy - r*0.55);
-    gardenCtx.strokeStyle = rgba(lighten(color,0.5), 0.8);
-    gardenCtx.lineWidth = r*0.028;
-    gardenCtx.shadowColor = color;
-    gardenCtx.shadowBlur  = 10;
-    gardenCtx.stroke();
-    gardenCtx.beginPath();
-    gardenCtx.arc(sx, sy - r*0.55, r*0.045, 0, Math.PI*2);
-    gardenCtx.fillStyle = '#ffee44';
-    gardenCtx.shadowColor = '#ffee00';
-    gardenCtx.shadowBlur  = 12;
-    gardenCtx.fill();
   }
   gardenCtx.restore();
 }
@@ -267,52 +296,34 @@ function drawPoppy(cx, cy, r, color, bloom) {
   gardenCtx.save();
   gardenCtx.translate(cx, cy);
   gardenCtx.scale(scale, scale);
-  const petals = 5;
+  const petals = 4;
   for (let i = 0; i < petals; i++) {
     const a = (i/petals)*Math.PI*2;
     gardenCtx.save();
     gardenCtx.rotate(a);
     gardenCtx.beginPath();
     gardenCtx.moveTo(0, 0);
-    gardenCtx.bezierCurveTo(-r*0.5, -r*0.3, -r*0.55, -r*0.9, -r*0.15, -r*1.0);
-    gardenCtx.bezierCurveTo( r*0.0,  -r*1.1,  r*0.15, -r*1.0, r*0.55, -r*0.9);
-    gardenCtx.bezierCurveTo( r*0.5,  -r*0.3,  0, 0, 0, 0);
+    gardenCtx.bezierCurveTo(-r*0.4, -r*0.25, -r*0.45, -r*0.8, -r*0.1, -r*0.9);
+    gardenCtx.bezierCurveTo( r*0.0,  -r*1.0,  r*0.1, -r*0.9, r*0.45, -r*0.8);
+    gardenCtx.bezierCurveTo( r*0.4,  -r*0.25,  0, 0, 0, 0);
     const pg = gardenCtx.createLinearGradient(0,0,0,-r);
     pg.addColorStop(0, rgba(darken(color,0.5), 0.9));
     pg.addColorStop(0.4, rgba(color, 0.92));
     pg.addColorStop(1, rgba(lighten(color,0.4), 0.85));
     gardenCtx.fillStyle = pg;
     gardenCtx.shadowColor = color;
-    gardenCtx.shadowBlur  = 24;
+    gardenCtx.shadowBlur  = 18;
     gardenCtx.fill();
-    for (let c = -1; c <= 1; c++) {
-      gardenCtx.beginPath();
-      gardenCtx.moveTo(0, -r*0.08);
-      gardenCtx.bezierCurveTo(c*r*0.15, -r*0.45, c*r*0.2, -r*0.75, c*r*0.05, -r*0.95);
-      gardenCtx.strokeStyle = rgba(lighten(color,0.35), 0.35);
-      gardenCtx.lineWidth = r*0.03;
-      gardenCtx.shadowBlur = 4;
-      gardenCtx.stroke();
-    }
     gardenCtx.restore();
   }
-  const sg = gardenCtx.createRadialGradient(0,-r*0.08,0,0,0,r*0.22);
+  const sg = gardenCtx.createRadialGradient(0,-r*0.08,0,0,0,r*0.18);
   sg.addColorStop(0,'#2a1a5a'); sg.addColorStop(1,'#0d0828');
   gardenCtx.beginPath();
-  gardenCtx.arc(0, 0, r*0.22, 0, Math.PI*2);
+  gardenCtx.arc(0, 0, r*0.18, 0, Math.PI*2);
   gardenCtx.fillStyle = sg;
   gardenCtx.shadowColor = '#6600cc';
-  gardenCtx.shadowBlur  = 18;
+  gardenCtx.shadowBlur  = 14;
   gardenCtx.fill();
-  for (let i = 0; i < 8; i++) {
-    const a = (i/8)*Math.PI*2;
-    gardenCtx.beginPath();
-    gardenCtx.moveTo(0,0);
-    gardenCtx.lineTo(r*0.20*Math.cos(a), r*0.20*Math.sin(a));
-    gardenCtx.strokeStyle = rgba(lighten(color,0.4), 0.6);
-    gardenCtx.lineWidth = r*0.025;
-    gardenCtx.stroke();
-  }
   gardenCtx.restore();
 }
 
@@ -322,32 +333,27 @@ function drawHyacinth(cx, cy, r, color, bloom) {
   gardenCtx.save();
   gardenCtx.translate(cx, cy);
   gardenCtx.scale(scale, scale);
-  const rows = 8;
+  const rows = 5;
   for (let row = 0; row < rows; row++) {
     const rowBloom = Math.max(0, Math.min(1, bloom * rows - row));
     if (rowBloom <= 0) continue;
-    const y = -row * r*0.18 - r*0.1;
-    const count = Math.max(2, 5 - Math.floor(row/2));
+    const y = -row * r*0.15 - r*0.08;
+    const count = Math.max(2, 4 - Math.floor(row/2));
     for (let i = 0; i < count; i++) {
       const angle = (i/count)*Math.PI*2;
-      const fx = Math.cos(angle)*r*(0.30 - row*0.022);
-      const fy = Math.sin(angle)*r*(0.22 - row*0.015) + y;
+      const fx = Math.cos(angle)*r*(0.25 - row*0.025);
+      const fy = Math.sin(angle)*r*(0.18 - row*0.02) + y;
       gardenCtx.save();
       gardenCtx.translate(fx, fy);
-      for (let p = 0; p < 5; p++) {
-        const pa = (p/5)*Math.PI*2;
+      for (let p = 0; p < 4; p++) {
+        const pa = (p/4)*Math.PI*2;
         gardenCtx.beginPath();
-        gardenCtx.ellipse(Math.cos(pa)*r*0.08, Math.sin(pa)*r*0.08, r*0.06, r*0.09, pa, 0, Math.PI*2);
-        gardenCtx.fillStyle = rgba(color, 0.9 * rowBloom);
+        gardenCtx.ellipse(Math.cos(pa)*r*0.06, Math.sin(pa)*r*0.06, r*0.04, r*0.07, pa, 0, Math.PI*2);
+        gardenCtx.fillStyle = rgba(color, 0.85 * rowBloom);
         gardenCtx.shadowColor = color;
-        gardenCtx.shadowBlur  = 14;
+        gardenCtx.shadowBlur  = 10;
         gardenCtx.fill();
       }
-      gardenCtx.beginPath();
-      gardenCtx.arc(0, 0, r*0.04, 0, Math.PI*2);
-      gardenCtx.fillStyle = rgba(lighten(color,0.5), 0.95*rowBloom);
-      gardenCtx.shadowBlur = 8;
-      gardenCtx.fill();
       gardenCtx.restore();
     }
   }
@@ -355,7 +361,7 @@ function drawHyacinth(cx, cy, r, color, bloom) {
 }
 
 // ── GARDEN STATE ────────────────────────────────────────────────────
-const flowers = [
+const flowerTypes = [
   { color: '#e8003d', type: 'rose' },
   { color: '#ff00aa', type: 'tulip' },
   { color: '#ff6600', type: 'lily' },
@@ -363,30 +369,55 @@ const flowers = [
   { color: '#ff2200', type: 'poppy' },
   { color: '#ffffff', type: 'daisy' },
   { color: '#8833ff', type: 'hyacinth' },
-  { color: '#00ddff', type: 'tulip' },
-  { color: '#ff00cc', type: 'lily' },
 ];
 
 const garden = [];
+const grassBlades = [];
 
 function initGarden() {
   garden.length = 0;
   const W = flowerCanvas.width;
   const H = flowerCanvas.height;
-  const spacing = W / (flowers.length + 1);
-
-  flowers.forEach((flowerType, index) => {
-    garden.push({
-      x: spacing * (index + 1),
-      y: H * 0.7,
-      type: flowerType.type,
-      color: flowerType.color,
-      size: W * 0.04 + Math.random() * W * 0.02,
-      bloom: 0,
-      bloomSpeed: 0.005 + Math.random() * 0.004,
-      bobPhase: Math.random() * Math.PI * 2,
-    });
+  
+  // Create 2-3 copies of each flower type
+  flowerTypes.forEach((flowerType) => {
+    const copies = 2 + Math.floor(Math.random() * 2); // 2-3 copies
+    for (let c = 0; c < copies; c++) {
+      const randomX = Math.random() * W * 0.9 + W * 0.05; // Scattered across width
+      const randomY = H * 0.5 + Math.random() * H * 0.35; // Bottom half
+      
+      garden.push({
+        x: randomX,
+        y: randomY,
+        type: flowerType.type,
+        color: flowerType.color,
+        size: (W * 0.018 + Math.random() * W * 0.012),
+        bloom: 0,
+        bloomSpeed: 0.003 + Math.random() * 0.003,
+        bloomDelay: Math.random() * 2,
+        bobPhase: Math.random() * Math.PI * 2,
+        stemHeight: W * 0.08 + Math.random() * W * 0.04,
+      });
+    }
   });
+}
+
+function initGrass() {
+  grassBlades.length = 0;
+  const W = flowerCanvas.width;
+  const H = flowerCanvas.height;
+  const grassCount = 40 + Math.floor(Math.random() * 30);
+  
+  for (let i = 0; i < grassCount; i++) {
+    grassBlades.push({
+      x: Math.random() * W,
+      y: H,
+      height: W * 0.03 + Math.random() * W * 0.02,
+      lean: Math.random() * Math.PI * 2,
+      bobPhase: Math.random() * Math.PI * 2,
+      bobSpeed: 0.4 + Math.random() * 0.3,
+    });
+  }
 }
 
 // ── ANIMATION LOOP ───────────────────────────────────────────────
@@ -401,43 +432,52 @@ function animateGarden(ts) {
 
   animationTime += 0.016; // ~60fps
 
+  // Draw grass first (background)
+  for (const blade of grassBlades) {
+    const bob = Math.sin(animationTime * blade.bobSpeed + blade.bobPhase) * 1;
+    drawGrassBlade(blade.x, blade.y + bob, blade.height, blade.lean + bob*0.05, 0.6);
+  }
+
   // Update and draw flowers
   for (const flower of garden) {
-    // Bloom animation
-    if (flower.bloom < 1) {
+    // Bloom animation with delay
+    if (animationTime > flower.bloomDelay && flower.bloom < 1) {
       flower.bloom += flower.bloomSpeed;
     }
 
-    const bloomVal = Math.min(1, flower.bloom);
+    const bloomVal = Math.min(1, Math.max(0, flower.bloom));
 
     // Gentle bobbing motion
-    const bob = Math.sin(animationTime * 0.5 + flower.bobPhase) * 3;
+    const bob = Math.sin(animationTime * 0.4 + flower.bobPhase) * 2.5;
 
     gardenCtx.save();
     gardenCtx.translate(flower.x, flower.y + bob);
 
+    // Draw stem and leaves
+    drawStem(0, 0, flower.stemHeight, '#00cc44', bloomVal);
+
     // Draw the flower based on type
     switch (flower.type) {
       case 'rose':
-        drawRose(0, 0, flower.size, flower.color, bloomVal);
+        drawRose(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
       case 'tulip':
-        drawTulip(0, 0, flower.size, flower.color, bloomVal);
+        drawTulip(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
       case 'sunflower':
-        drawSunflower(0, 0, flower.size, bloomVal);
+        drawSunflower(0, -flower.stemHeight, flower.size, bloomVal);
         break;
       case 'daisy':
-        drawDaisy(0, 0, flower.size, flower.color, bloomVal);
+        drawDaisy(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
       case 'lily':
-        drawLily(0, 0, flower.size, flower.color, bloomVal);
+        drawLily(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
       case 'poppy':
-        drawPoppy(0, 0, flower.size, flower.color, bloomVal);
+        drawPoppy(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
       case 'hyacinth':
-        drawHyacinth(0, 0, flower.size, flower.color, bloomVal);
+        drawHyacinth(0, -flower.stemHeight, flower.size, flower.color, bloomVal);
         break;
     }
 
@@ -450,7 +490,8 @@ function animateGarden(ts) {
 
 // Initialize and start
 initGarden();
+initGrass();
 requestAnimationFrame(animateGarden);
 
 // Export for use in main script
-window.flowerGarden = { initGarden };
+window.flowerGarden = { initGarden, initGrass };
