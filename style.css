@@ -361,13 +361,18 @@ body.is-night .garden-grass-blade {
 }
 
 .garden-flower__petal {
+  /* Version 15: fill now transitions too — day color is the soft, pastel
+     --petal-color; night crossfades to the vivid --petal-color-night.
+     "fill" is a genuinely animatable CSS color property, so this fades
+     smoothly over the same 1.6s window as everything else at night. */
   fill: var(--petal-color, #ff8fab);
   opacity: 0.95;
-  transition: filter 1.6s ease;
+  transition: fill 1.6s ease, filter 1.6s ease;
   filter: drop-shadow(0 0 0px transparent) brightness(1);
 }
 
 body.is-night .garden-flower__petal {
+  fill: var(--petal-color-night, var(--petal-color, #ff8fab));
   filter: drop-shadow(0 0 8px var(--glow-color, transparent)) brightness(1.3);
 }
 
