@@ -408,11 +408,12 @@ function initCake() {
    10. ENVIRONMENT SYSTEM — Wind + Light
 ----------------------------------------------------- */
 const WIND_CONFIG = {
-  updateIntervalMs: 120,
-  baseAngleDeg: -6,
-  swayDeg: 14,
-  strengthMin: 0.25,
-  strengthMax: 0.85,
+  updateIntervalMs: 150, // Version 15: was 120 — fewer updates/sec, small perf help
+  baseAngleDeg: -4,      // Version 15: was -6 — gentler prevailing lean
+  swayDeg: 6,            // Version 15: was 14 — the main "tone down the wind" lever;
+                          // this drives grass, flowers, and floaters all at once
+  strengthMin: 0.15,     // Version 15: was 0.25
+  strengthMax: 0.5,      // Version 15: was 0.85
 };
 
 let windElapsedStart = null;
@@ -646,6 +647,25 @@ const FLOWER_FIELD_CONFIG = {
   bottomMax: 32,
 };
 
+// Version 15 — "just some random flowers movement": only a subset of
+// flowers get the visible independent nod; the rest get amplitude 0,
+// which keeps the animation technically running but visually still —
+// no CSS changes needed to turn a flower's nodding on or off.
+const FLOWER_NOD_CONFIG = {
+  chance: 0.35,
+  amplitudeMin: 1.5,
+  amplitudeMax: 3.5,
+  durationMin: 3,
+  durationMax: 6,
+  delayMax: 4,
+};
+
+function pickNodAmplitude() {
+  if (Math.random() >= FLOWER_NOD_CONFIG.chance) return 0;
+  return FLOWER_NOD_CONFIG.amplitudeMin +
+    Math.random() * (FLOWER_NOD_CONFIG.amplitudeMax - FLOWER_NOD_CONFIG.amplitudeMin);
+}
+
 function jitterGaussianish(spread) {
   const sum = Math.random() + Math.random() + Math.random() - 1.5;
   return (sum / 1.5) * spread;
@@ -694,12 +714,12 @@ function createFlowerInstance(clusterCenters) {
   const transitionDelay = (Math.random() * 0.8).toFixed(2);
   const transitionDuration = (0.22 + Math.random() * 0.45).toFixed(2);
 
-  // Version 14 — independent sway PHASE: each flower's bloom nods on its
-  // own amplitude/duration/delay, layered on top of the shared wind
-  // engine (the engine itself is untouched — see bloomNod in style.css).
-  const nodAmplitude = (2 + Math.random() * 4).toFixed(1);
-  const nodDuration = (3 + Math.random() * 3).toFixed(2);
-  const nodDelay = (Math.random() * 4).toFixed(2);
+  // Version 15 — most flowers now get zero nod amplitude (static aside
+  // from the calmer base wind sway); only ~35% actually visibly nod.
+  const nodAmplitude = pickNodAmplitude().toFixed(1);
+  const nodDuration = (FLOWER_NOD_CONFIG.durationMin +
+    Math.random() * (FLOWER_NOD_CONFIG.durationMax - FLOWER_NOD_CONFIG.durationMin)).toFixed(2);
+  const nodDelay = (Math.random() * FLOWER_NOD_CONFIG.delayMax).toFixed(2);
 
   const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   el.setAttribute('viewBox', '0 0 40 100');
