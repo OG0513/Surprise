@@ -42,122 +42,8 @@
   </button>
 
   <div class="world" id="world" aria-hidden="true">
-
-    <div class="sky">
-      <svg class="sky__sun" viewBox="0 0 200 200" focusable="false">
-        <defs>
-          <radialGradient id="sunGlowGradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" style="stop-color:#fffaf0; stop-opacity:1" />
-            <stop offset="45%" style="stop-color:var(--sun-color); stop-opacity:0.9" />
-            <stop offset="100%" style="stop-color:var(--sun-color); stop-opacity:0" />
-          </radialGradient>
-        </defs>
-        <circle cx="100" cy="100" r="95" fill="url(#sunGlowGradient)" />
-        <circle cx="100" cy="100" r="42" fill="#fff4d9" />
-      </svg>
-
-      <svg class="sky__moon" viewBox="0 0 200 200" focusable="false">
-        <defs>
-          <radialGradient id="moonGlowGradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" style="stop-color:#fff3c4; stop-opacity:0.95" />
-            <stop offset="45%" style="stop-color:#f4d98a; stop-opacity:0.55" />
-            <stop offset="100%" style="stop-color:#f4d98a; stop-opacity:0" />
-          </radialGradient>
-          <radialGradient id="moonBodyGradient" cx="38%" cy="35%" r="70%">
-            <stop offset="0%" style="stop-color:#fff6da" />
-            <stop offset="55%" style="stop-color:#f3dd9c" />
-            <stop offset="100%" style="stop-color:#d9b96a" />
-          </radialGradient>
-          <radialGradient id="craterShade" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" style="stop-color:#e8c878" />
-            <stop offset="100%" style="stop-color:#c7a35a" />
-          </radialGradient>
-        </defs>
-        <circle cx="100" cy="100" r="92" fill="url(#moonGlowGradient)" />
-        <circle cx="100" cy="100" r="42" fill="url(#moonBodyGradient)" />
-        <circle cx="86" cy="84" r="8" fill="url(#craterShade)" opacity="0.75" />
-        <circle cx="88" cy="82" r="3" fill="#fff6da" opacity="0.35" />
-        <circle cx="114" cy="94" r="5.5" fill="url(#craterShade)" opacity="0.7" />
-        <circle cx="112" cy="92" r="2" fill="#fff6da" opacity="0.3" />
-        <circle cx="95" cy="112" r="6.5" fill="url(#craterShade)" opacity="0.7" />
-        <circle cx="93" cy="110" r="2.4" fill="#fff6da" opacity="0.3" />
-        <circle cx="118" cy="116" r="4" fill="url(#craterShade)" opacity="0.65" />
-        <circle cx="108" cy="76" r="3.2" fill="url(#craterShade)" opacity="0.6" />
-        <circle cx="78" cy="104" r="3.6" fill="url(#craterShade)" opacity="0.65" />
-      </svg>
-
-      <svg class="sky__cloud sky__cloud--1" viewBox="0 0 200 90" focusable="false">
-        <g fill="#ffffff" opacity="0.9">
-          <ellipse cx="55" cy="55" rx="55" ry="32" />
-          <ellipse cx="110" cy="42" rx="45" ry="38" />
-          <ellipse cx="150" cy="58" rx="38" ry="26" />
-          <ellipse cx="90" cy="65" rx="60" ry="22" />
-        </g>
-      </svg>
-
-      <svg class="sky__cloud sky__cloud--2" viewBox="0 0 200 90" focusable="false">
-        <g fill="#ffffff" opacity="0.8">
-          <ellipse cx="50" cy="50" rx="48" ry="26" />
-          <ellipse cx="100" cy="38" rx="40" ry="32" />
-          <ellipse cx="135" cy="52" rx="34" ry="22" />
-        </g>
-      </svg>
-
-      <svg class="sky__cloud sky__cloud--3" viewBox="0 0 200 90" focusable="false">
-        <g fill="#ffffff" opacity="0.85">
-          <ellipse cx="60" cy="52" rx="50" ry="28" />
-          <ellipse cx="112" cy="40" rx="42" ry="34" />
-          <ellipse cx="150" cy="55" rx="32" ry="22" />
-          <ellipse cx="85" cy="62" rx="55" ry="20" />
-        </g>
-      </svg>
-
-      <svg class="sky__cloud sky__cloud--4" viewBox="0 0 200 90" focusable="false">
-        <g fill="#ffffff" opacity="0.75">
-          <ellipse cx="45" cy="50" rx="40" ry="22" />
-          <ellipse cx="90" cy="40" rx="34" ry="26" />
-          <ellipse cx="120" cy="52" rx="26" ry="18" />
-        </g>
-      </svg>
-
-      <svg class="sky__cloud sky__cloud--5" viewBox="0 0 200 90" focusable="false">
-        <g fill="#ffffff" opacity="0.7">
-          <ellipse cx="40" cy="48" rx="32" ry="18" />
-          <ellipse cx="75" cy="38" rx="28" ry="22" />
-          <ellipse cx="100" cy="50" rx="22" ry="16" />
-        </g>
-      </svg>
-
-      <div class="sky__stars" aria-hidden="true">
-        <span class="star" style="top:5%; left:15%; --star-size:2px; --twinkle-delay:0.3s; --twinkle-duration:3.4s;"></span>
-        <span class="star" style="top:12%; left:35%; --star-size:1.5px; --twinkle-delay:1.1s; --twinkle-duration:2.8s;"></span>
-        <span class="star" style="top:8%; left:60%; --star-size:2.5px; --twinkle-delay:0.6s; --twinkle-duration:3.8s;"></span>
-        <span class="star" style="top:18%; left:78%; --star-size:1.8px; --twinkle-delay:2.0s; --twinkle-duration:3.1s;"></span>
-        <span class="star" style="top:22%; left:5%; --star-size:2px; --twinkle-delay:0.9s; --twinkle-duration:4.0s;"></span>
-        <span class="star" style="top:28%; left:25%; --star-size:1.5px; --twinkle-delay:1.6s; --twinkle-duration:2.6s;"></span>
-        <span class="star" style="top:15%; left:50%; --star-size:2.2px; --twinkle-delay:0.2s; --twinkle-duration:3.5s;"></span>
-        <span class="star" style="top:32%; left:68%; --star-size:1.6px; --twinkle-delay:2.4s; --twinkle-duration:3.0s;"></span>
-        <span class="star" style="top:6%; left:90%; --star-size:1.8px; --twinkle-delay:1.3s; --twinkle-duration:2.9s;"></span>
-        <span class="star" style="top:38%; left:12%; --star-size:2px; --twinkle-delay:0.5s; --twinkle-duration:3.6s;"></span>
-        <span class="star" style="top:25%; left:42%; --star-size:1.4px; --twinkle-delay:1.8s; --twinkle-duration:2.7s;"></span>
-        <span class="star" style="top:10%; left:22%; --star-size:2.3px; --twinkle-delay:0.7s; --twinkle-duration:3.9s;"></span>
-        <span class="star" style="top:35%; left:85%; --star-size:1.7px; --twinkle-delay:2.2s; --twinkle-duration:3.2s;"></span>
-        <span class="star" style="top:20%; left:92%; --star-size:1.9px; --twinkle-delay:0.4s; --twinkle-duration:3.3s;"></span>
-        <span class="star" style="top:42%; left:30%; --star-size:1.5px; --twinkle-delay:1.5s; --twinkle-duration:2.5s;"></span>
-        <span class="star" style="top:16%; left:8%; --star-size:2.1px; --twinkle-delay:1.0s; --twinkle-duration:3.7s;"></span>
-        <span class="star" style="top:30%; left:55%; --star-size:1.6px; --twinkle-delay:2.6s; --twinkle-duration:3.0s;"></span>
-        <span class="star" style="top:4%; left:45%; --star-size:1.8px; --twinkle-delay:0.8s; --twinkle-duration:2.9s;"></span>
-        <span class="star" style="top:40%; left:65%; --star-size:1.4px; --twinkle-delay:1.9s; --twinkle-duration:3.4s;"></span>
-        <span class="star" style="top:24%; left:15%; --star-size:2px; --twinkle-delay:1.2s; --twinkle-duration:3.1s;"></span>
-      </div>
-    </div>
-
-    <div class="meadow" id="meadow">
-      <div class="meadow__field" id="meadowField">
-        <div class="creature-layer" id="creatureLayer"></div>
-      </div>
-    </div>
-
+    <div class="sky"></div>
+    <canvas id="flowerGarden" class="flower-garden-canvas"></canvas>
   </div>
 
   <div class="particles" id="particles" aria-hidden="true"></div>
@@ -264,6 +150,7 @@
     </div>
   </section>
 
+  <script src="flowers.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

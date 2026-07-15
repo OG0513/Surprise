@@ -88,14 +88,14 @@ button {
 }
 
 /* =====================================================
-   3. ILLUSTRATED WORLD — Sky Only
+   3. WORLD & FLOWER GARDEN
 ===================================================== */
 .world {
   position: fixed;
   inset: 0;
   z-index: -3;
   overflow: hidden;
-  background: #eaf6ff;
+  background: var(--color-cream);
 }
 
 .sky {
@@ -125,152 +125,15 @@ body.is-night .sky {
   );
 }
 
-.sky::after {
-  content: '';
+.flower-garden-canvas {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 78% 12%, rgba(255, 233, 184, 0.35), transparent 55%);
-  transition: background 1.8s ease;
-  pointer-events: none;
-}
-
-body.is-night .sky::after {
-  background: radial-gradient(ellipse at 78% 15%, rgba(120, 150, 255, 0.22), transparent 55%);
-}
-
-.sky__sun,
-.sky__moon {
-  position: absolute;
-  top: 8%;
-  right: 12%;
-  width: clamp(90px, 16vw, 170px);
-  height: auto;
-  transition: opacity 1.8s ease;
-}
-
-.sky__sun {
-  animation: sunPulse 9s ease-in-out infinite;
-}
-
-.sky__moon {
-  opacity: 0;
-}
-
-body.is-night .sky__sun {
-  opacity: 0;
-}
-
-body.is-night .sky__moon {
-  opacity: 1;
-}
-
-@keyframes sunPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.92; }
-}
-
-.sky__cloud {
-  position: absolute;
-  width: clamp(90px, 16vw, 190px);
-  height: auto;
-  filter: blur(0.6px) brightness(1) saturate(1) hue-rotate(0deg);
-  transition: filter 1.8s ease;
-}
-
-body.is-night .sky__cloud {
-  filter: blur(0.6px) brightness(0.4) saturate(0.55) hue-rotate(10deg);
-}
-
-.sky__cloud--1 {
-  top: 12%;
-  left: 8%;
-  animation: cloudDrift 70s ease-in-out infinite;
-}
-
-.sky__cloud--2 {
-  top: 24%;
-  right: 20%;
-  width: clamp(70px, 13vw, 150px);
-  animation: cloudDrift 85s ease-in-out infinite reverse;
-}
-
-.sky__cloud--3 {
-  top: 6%;
-  left: 42%;
-  width: clamp(80px, 15vw, 170px);
-  animation: cloudDrift 95s ease-in-out infinite;
-  animation-delay: -20s;
-}
-
-.sky__cloud--4 {
-  top: 34%;
-  left: 65%;
-  width: clamp(55px, 10vw, 120px);
-  animation: cloudDrift 110s ease-in-out infinite;
-  animation-delay: -45s;
-}
-
-.sky__cloud--5 {
-  top: 4%;
-  left: 68%;
-  width: clamp(50px, 9vw, 105px);
-  animation: cloudDrift 60s ease-in-out infinite reverse;
-  animation-delay: -10s;
-}
-
-@keyframes cloudDrift {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(3%); }
-}
-
-.sky__stars {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 1.8s ease;
-  pointer-events: none;
-}
-
-body.is-night .sky__stars {
-  opacity: 1;
-}
-
-.star {
-  position: absolute;
-  width: var(--star-size, 2px);
-  height: var(--star-size, 2px);
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.8);
-  animation: starTwinkle var(--twinkle-duration, 3s) ease-in-out infinite;
-  animation-delay: var(--twinkle-delay, 0s);
-}
-
-@keyframes starTwinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-/* --- Meadow: empty placeholder --- */
-.meadow {
-  position: absolute;
-  left: -6%;
-  right: -6%;
   bottom: 0;
-  height: clamp(240px, 40vh, 480px);
-  overflow: hidden;
-}
-
-.meadow__field {
-  position: absolute;
-  inset: 0;
-}
-
-.creature-layer {
-  position: absolute;
-  inset: 0 0 20% 0;
-  pointer-events: none;
-  z-index: 2;
+  left: 0;
+  right: 0;
+  display: block;
+  width: 100%;
+  height: 30vh;
+  z-index: 1;
 }
 
 /* =====================================================
