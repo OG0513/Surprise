@@ -11,8 +11,24 @@
   <!-- Root Application Container -->
   <main id="app-root" class="app-root" aria-hidden="true">
     
-    <!-- 1. Loading Layer (Prepared for entry transitions) -->
-    <div id="layer-loading" class="layer layer-loading"></div>
+    <!-- 1. Loading Layer (Version 1.2 Immersive Entry) -->
+    <div id="layer-loading" class="layer layer-loading">
+      <!-- High-Performance Particle Canvas for Magical Dust -->
+      <canvas id="loading-canvas" class="loading-canvas"></canvas>
+      
+      <!-- Centralized Calligraphic Monogram and Message Interface -->
+      <div class="loading-container">
+        <svg class="monogram-svg" viewBox="0 0 200 100" aria-label="Personalized initials">
+          <!-- Fluid Elegant Left Initial Flourish (e.g., J/L curve) -->
+          <path class="draw-path path-left" d="M 45,25 C 35,25 30,35 30,45 C 30,65 50,75 65,75 C 75,75 80,70 80,60 C 80,50 70,45 60,50 C 50,55 55,65 65,65" />
+          <!-- Fluid Elegant Ampersand (&) -->
+          <path class="draw-path path-amp" d="M 103,63 C 97,57 93,51 98,45 C 102,40 106,44 102,50 C 96,57 91,61 106,65" />
+          <!-- Fluid Elegant Right Initial Flourish (e.g., M style) -->
+          <path class="draw-path path-right" d="M 120,65 L 120,35 C 120,35 128,55 135,55 C 142,55 150,35 150,35 L 150,65 C 150,65 155,70 165,70" />
+        </svg>
+        <p class="loading-message">Someone made something special for you...</p>
+      </div>
+    </div>
 
     <!-- 2. World Container (Contains all core visual layers) -->
     <div id="layer-world" class="layer layer-world">
