@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. DESIGN SYSTEM & CUSTOM PROPERTIES
+   1. DESIGN SYSTEM & CUSTOM PROPERTIES (Preserved & Enhanced)
    ========================================================================== */
 :root {
   /* Soft Cinematic Palette (Desaturated Pastel Variables) */
@@ -29,7 +29,7 @@
 }
 
 /* ==========================================================================
-   2. HARDWARE-ACCELERATED RESET
+   2. HARDWARE-ACCELERATED RESET (Preserved)
    ========================================================================== */
 *,
 *::before,
@@ -45,7 +45,6 @@ body {
   height: 100%;
   overflow: hidden;
   background-color: var(--color-sky-top);
-  /* Prevent scroll bouncing, touch selection, and zooming on mobile */
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -53,7 +52,6 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Ensure typography and scale adapt nicely */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-rendering: optimizeLegibility;
@@ -62,13 +60,12 @@ body {
 }
 
 /* ==========================================================================
-   3. STRUCTURE & VIEWPORT MANAGEMENT
+   3. STRUCTURE & VIEWPORT MANAGEMENT (Preserved)
    ========================================================================== */
 .app-root {
   position: relative;
   width: 100vw;
   height: 100vh;
-  /* Support modern viewport sizes including notch/home indicator areas */
   height: 100dvh;
   overflow: hidden;
   display: flex;
@@ -76,24 +73,111 @@ body {
   align-items: center;
 }
 
-/* Base Layer Definition */
 .layer {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* Let pointer events fall through to interactive sub-layers */
+  pointer-events: none;
 }
 
 /* ==========================================================================
-   4. LAYER-SPECIFIC RULES
+   4. LOADING LAYER & MONOGRAM STYLING (Version 1.2 Added)
    ========================================================================== */
+.layer-loading {
+  z-index: var(--z-loading);
+  pointer-events: auto; /* Capture interactions to shield background layers during transition */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity var(--transition-duration-slow) var(--transition-ease-slow);
+  
+  /* Smooth, multi-layered dreamy pastel gradient background */
+  background: radial-gradient(
+    circle at 50% 50%,
+    hsla(38, 40%, 94%, 0.85) 0%,
+    hsla(350, 45%, 88%, 0.85) 30%,
+    hsla(265, 30%, 82%, 0.9) 70%,
+    hsla(205, 35%, 84%, 1) 100%
+  );
+}
 
-/* World Layer - Backing for the entire experience */
+/* Dust Particles Layer */
+.loading-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: color-burn; /* Integrates particles with gradient organically */
+  pointer-events: none;
+}
+
+/* Visual Container Setup */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Calligraphy Monogram SVG Sizing */
+.monogram-svg {
+  width: 220px;
+  height: 110px;
+  max-width: 80vw;
+  overflow: visible;
+  /* Soft golden ambient focus */
+  filter: drop-shadow(0 0 0px var(--color-soft-gold));
+  transition: filter var(--transition-duration-slow) var(--transition-ease-slow);
+}
+
+.monogram-svg.glowing {
+  filter: drop-shadow(0 2px 8px hsla(43, 60%, 75%, 0.5));
+}
+
+/* Handwriting Stroke Simulation Settings */
+.draw-path {
+  fill: none;
+  stroke: var(--color-sky-top); /* Darker tone for elegant legibility */
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Will be dynamically assigned and transition-triggered by JavaScript */
+  transition: stroke-dashoffset 2.0s var(--transition-ease-slow);
+}
+
+/* Loading Subtext Styling */
+.loading-message {
+  margin: 2rem 0 0 0;
+  color: var(--color-sky-top);
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  letter-spacing: 0.15em;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: 
+    opacity var(--transition-duration-slow) var(--transition-ease-slow),
+    transform var(--transition-duration-slow) var(--transition-ease-slow);
+}
+
+.loading-message.visible {
+  opacity: 0.75;
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   5. OTHER LAYER STYLES (Preserved)
+   ========================================================================== */
 .layer-world {
   z-index: var(--z-world);
-  /* Cinematic twilight gradient acting as a placeholder */
   background: radial-gradient(
     circle at 50% 60%,
     var(--color-sky-bottom) 0%,
@@ -111,20 +195,11 @@ body {
 #layer-foreground { z-index: var(--z-foreground); }
 #layer-effects { z-index: var(--z-effects); }
 
-/* UI Layer - Active UI container, pointer events enabled selectively */
 #layer-ui {
   z-index: var(--z-ui);
   pointer-events: auto;
 }
 
-/* Loading Layer - Initially visible overlay */
-.layer-loading {
-  z-index: var(--z-loading);
-  background-color: var(--color-sky-top);
-  transition: opacity var(--transition-duration-slow) var(--transition-ease-slow);
-}
-
-/* Global Overlay Layer - Vignette effect to draw focus to center screen */
 .layer-overlay {
   z-index: var(--z-overlay);
   background: radial-gradient(
