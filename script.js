@@ -1,319 +1,472 @@
-/* =====================================================
-   BIRTHDAY WEBSITE — MAIN SCRIPT (Simplified)
-   Removed: flower system, wind engine, butterflies
-===================================================== */
+/**
+ * Application Foundation Script
+ * Developed using Vanilla JS. Keeps core utilities separate from global scope.
+ */
+
 'use strict';
-/* -----------------------------------------------------
-   1. CONFIG — Personalize the celebration here
------------------------------------------------------ */
-const CONFIG = {
-  name: 'Beautiful',
-  subtitle: "Today the world gets a little brighter — because it's your day. 🎂",
-  particleCount: 22,
-  card: {
-    message:
-      "Wishing you a day filled with warm light, soft laughter, and every " +
-      "little thing that makes you smile. May this new year of your life " +
-      "be as radiant and wonderful as you are.",
-    signature: 'With all my love 💛',
-  },
-  environment: {
-    startMode: 'day',
-  },
-  confettiPiecesPerBurst: 40,
-};
 
-/* -----------------------------------------------------
-   2. DOM REFERENCES
------------------------------------------------------ */
-const dom = {
-  landing: document.getElementById('landing'),
-  experience: document.getElementById('experience'),
-  startBtn: document.getElementById('startBtn'),
-  nameEl: document.getElementById('birthdayName'),
-  subtitleEl: document.getElementById('birthdaySubtitle'),
-  particlesContainer: document.getElementById('particles'),
+// IIFE to contain variable scoping and secure architecture
+(function() {
+  
+  // Reusable DOM Utility Helper Functions
+  const DOM = {
+    /**
+     * Find element inside DOM context
+     * @param {string} selector - CSS Selector string
+     * @param {HTMLElement} [context=document] - Parent element constraint
+     * @returns {HTMLElement|null}
+     */
+    find: (selector, context = document) => context.querySelector(selector),
 
-  experienceNameEl: document.getElementById('experienceName'),
-  greetingCard: document.getElementById('greetingCard'),
-  cardNameEl: document.getElementById('cardName'),
-  cardMessageEl: document.getElementById('cardMessage'),
-  cardSignatureEl: document.getElementById('cardSignature'),
-  closeCardBtn: document.getElementById('closeCardBtn'),
-  cardStatusHint: document.getElementById('cardStatusHint'),
+    /**
+     * Find all elements inside DOM context
+     * @param {string} selector - CSS Selector string
+     * @param {HTMLElement} [context=document] - Parent element constraint
+     * @returns {NodeList}
+     */
+    findAll: (selector, context = document) => context.querySelectorAll(selector),
 
-  confettiLayer: document.getElementById('confettiLayer'),
-  creatureLayer: document.getElementById('creatureLayer'),
-  celestialToggle: document.getElementById('celestialToggle'),
-};
-
-/* -----------------------------------------------------
-   3. PERSONALIZATION
------------------------------------------------------ */
-function applyPersonalization() {
-  if (dom.nameEl) dom.nameEl.textContent = CONFIG.name;
-  if (dom.subtitleEl) dom.subtitleEl.textContent = CONFIG.subtitle;
-
-  if (dom.experienceNameEl) dom.experienceNameEl.textContent = CONFIG.name;
-  if (dom.cardNameEl) dom.cardNameEl.textContent = CONFIG.name;
-  if (dom.cardMessageEl) dom.cardMessageEl.textContent = CONFIG.card.message;
-  if (dom.cardSignatureEl) dom.cardSignatureEl.textContent = CONFIG.card.signature;
-}
-
-/* -----------------------------------------------------
-   4. FLOATING PARTICLES
------------------------------------------------------ */
-function initParticles() {
-  const prefersReducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)'
-  ).matches;
-
-  if (prefersReducedMotion || !dom.particlesContainer) return;
-
-  const isSmallScreen = window.innerWidth < 480;
-  const count = isSmallScreen
-    ? Math.round(CONFIG.particleCount * 0.5)
-    : CONFIG.particleCount;
-
-  const fragment = document.createDocumentFragment();
-
-  for (let i = 0; i < count; i++) {
-    const particle = document.createElement('span');
-    particle.className = 'particle';
-
-    const size = Math.random() * 6 + 3;
-    const left = Math.random() * 100;
-    const duration = Math.random() * 10 + 10;
-    const delay = Math.random() * 12;
-    const drift = Math.random() * 80 - 40;
-
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.left = `${left}%`;
-    particle.style.animationDuration = `${duration}s`;
-    particle.style.animationDelay = `${delay}s`;
-    particle.style.setProperty('--drift', `${drift}px`);
-
-    fragment.appendChild(particle);
-  }
-
-  dom.particlesContainer.appendChild(fragment);
-}
-
-/* -----------------------------------------------------
-   5. START CELEBRATION TRANSITION
------------------------------------------------------ */
-function startCelebration() {
-  if (!dom.landing || !dom.experience) return;
-
-  applyLightMode('night');
-
-  dom.landing.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  dom.landing.style.opacity = '0';
-  dom.landing.style.transform = 'scale(0.98)';
-
-  window.setTimeout(() => {
-    dom.landing.classList.add('is-hidden');
-    dom.experience.classList.add('is-active');
-    dom.experience.setAttribute('aria-hidden', 'false');
-
-    dom.experience.setAttribute('tabindex', '-1');
-    dom.experience.focus({ preventScroll: true });
-
-    console.log('🎉 Celebration started!');
-  }, 600);
-}
-
-/* -----------------------------------------------------
-   6. BIRTHDAY CARD — Open/Close Interaction
------------------------------------------------------ */
-function initBirthdayCard() {
-  const card = dom.greetingCard;
-  const closeBtn = dom.closeCardBtn;
-  if (!card) return;
-
-  function setCardOpen(isOpen) {
-    card.classList.toggle('is-open', isOpen);
-    card.setAttribute('aria-pressed', String(isOpen));
-    card.setAttribute(
-      'aria-label',
-      isOpen
-        ? 'Birthday card, open. Press the close button to close it.'
-        : 'Birthday card, closed. Press to open and read your message.'
-    );
-
-    if (dom.cardStatusHint) {
-      dom.cardStatusHint.textContent = isOpen
-        ? 'tap the ✕ to close the card'
-        : 'tap the card to open it';
+    /**
+     * Safe event binding mechanism
+     * @param {HTMLElement} target - DOM Element
+     * @param {string} type - Event action string
+     * @param {Function} handler - Event handler callback
+     */
+    on: (target, type, handler) => {
+      if (target) target.addEventListener(type, handler);
     }
+  };
 
-    if (closeBtn) {
-      if (isOpen) {
-        closeBtn.removeAttribute('tabindex');
-      } else {
-        closeBtn.setAttribute('tabindex', '-1');
+  /**
+   * Utility helper to throttle function executions
+   * @param {Function} func - Function to execute
+   * @param {number} limit - Execution limit threshold in milliseconds
+   * @returns {Function}
+   */
+  const throttle = (func, limit) => {
+    let inThrottle;
+    return function() {
+      const args = arguments;
+      const context = this;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  };
+
+  // Canvas Loader Floating Particles Controller
+  const ParticleSystem = {
+    canvas: null,
+    ctx: null,
+    particles: [],
+    animationFrameId: null,
+    running: false,
+    
+    // Configurable Particle Options
+    config: {
+      count: 45,
+      minSize: 1,
+      maxSize: 3.5,
+      minSpeed: 0.1,
+      maxSpeed: 0.55,
+      color: 'rgba(251, 191, 36, 0.4)' // Soft amber gold
+    },
+
+    /**
+     * Start animation container
+     * @param {HTMLCanvasElement} canvasElement 
+     */
+    init: function(canvasElement) {
+      if (!canvasElement) return;
+      this.canvas = canvasElement;
+      this.ctx = this.canvas.getContext('2d');
+      this.running = true;
+
+      this.resizeCanvas();
+      this.createParticles();
+      this.animate();
+
+      DOM.on(window, 'resize', () => this.resizeCanvas());
+    },
+
+    resizeCanvas: function() {
+      if (!this.canvas) return;
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    },
+
+    createParticles: function() {
+      this.particles = [];
+      for (let i = 0; i < this.config.count; i++) {
+        this.particles.push({
+          x: Math.random() * this.canvas.width,
+          y: Math.random() * this.canvas.height,
+          radius: Math.random() * (this.config.maxSize - this.config.minSize) + this.config.minSize,
+          speedY: -(Math.random() * (this.config.maxSpeed - this.config.minSpeed) + this.config.minSpeed),
+          speedX: (Math.random() - 0.5) * 0.25,
+          alpha: Math.random() * 0.5 + 0.2,
+          fadeSpeed: Math.random() * 0.005 + 0.002,
+          oscillating: Math.random() > 0.5
+        });
+      }
+    },
+
+    animate: function() {
+      if (!this.running) return;
+
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      
+      for (let i = 0; i < this.particles.length; i++) {
+        const p = this.particles[i];
+        
+        // Draw Soft Glowing Particle
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        
+        // Add subtle radial bloom to particles
+        const gradient = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2);
+        gradient.addColorStop(0, `rgba(251, 191, 36, ${p.alpha})`);
+        gradient.addColorStop(0.5, `rgba(251, 191, 36, ${p.alpha * 0.4})`);
+        gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+
+        // Update Position
+        p.y += p.speedY;
+        p.x += p.speedX;
+
+        // Subtly oscillate alpha to mimic embers/fireflies
+        if (p.oscillating) {
+          p.alpha -= p.fadeSpeed;
+          if (p.alpha <= 0.15) {
+            p.oscillating = false;
+          }
+        } else {
+          p.alpha += p.fadeSpeed;
+          if (p.alpha >= 0.75) {
+            p.oscillating = true;
+          }
+        }
+
+        // Wrap around boundary logic
+        if (p.y < -p.radius * 2) {
+          p.y = this.canvas.height + p.radius * 2;
+          p.x = Math.random() * this.canvas.width;
+        }
+        if (p.x < -p.radius * 2 || p.x > this.canvas.width + p.radius * 2) {
+          p.x = Math.random() * this.canvas.width;
+        }
+      }
+
+      this.animationFrameId = requestAnimationFrame(() => this.animate());
+    },
+
+    /**
+     * Clean resources, detach animation updates to prevent background execution
+     */
+    stop: function() {
+      this.running = false;
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
       }
     }
-  }
+  };
 
-  card.addEventListener('click', () => {
-    if (!card.classList.contains('is-open')) {
-      setCardOpen(true);
-    }
-  });
+  // Canvas Garden Ambient Effects Controller (Stars, Petals, Fireflies)
+  const GardenEffects = {
+    canvas: null,
+    ctx: null,
+    stars: [],
+    fireflies: [],
+    petals: [],
+    animationFrameId: null,
+    active: false,
 
-  card.addEventListener('keydown', (event) => {
-    const isActivationKey = event.key === 'Enter' || event.key === ' ';
-    if (isActivationKey && !card.classList.contains('is-open')) {
-      event.preventDefault();
-      setCardOpen(true);
-    }
-  });
+    init: function(canvasElement) {
+      if (!canvasElement) return;
+      this.canvas = canvasElement;
+      this.ctx = this.canvas.getContext('2d');
+      this.active = true;
 
-  if (closeBtn) {
-    closeBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      setCardOpen(false);
-    });
-  }
+      this.resizeCanvas();
+      this.setupFXLayers();
+      this.loop();
 
-  setCardOpen(false);
-}
+      DOM.on(window, 'resize', () => this.resizeCanvas());
+    },
 
-/* -----------------------------------------------------
-   7. CONFETTI BURST — Reusable Celebration Utility
------------------------------------------------------ */
-const CONFETTI_COLORS = ['#ff8fab', '#f5c66b', '#b98be0', '#c9e4ff', '#ffc2d1'];
+    resizeCanvas: function() {
+      if (!this.canvas) return;
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+    },
 
-function triggerConfetti(originXPercent = 50) {
-  const prefersReducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)'
-  ).matches;
+    setupFXLayers: function() {
+      const w = this.canvas.width;
+      const h = this.canvas.height;
 
-  if (prefersReducedMotion || !dom.confettiLayer) return;
-
-  const fragment = document.createDocumentFragment();
-
-  for (let i = 0; i < CONFIG.confettiPiecesPerBurst; i++) {
-    const piece = document.createElement('span');
-    piece.className = 'confetti-piece';
-
-    const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
-    const left = Math.min(100, Math.max(0, originXPercent + (Math.random() * 40 - 20)));
-    const duration = Math.random() * 1.5 + 2;
-    const delay = Math.random() * 0.3;
-    const drift = Math.random() * 160 - 80;
-    const spin = Math.random() * 720 - 360;
-    const size = Math.random() * 4 + 6;
-
-    piece.style.left = `${left}%`;
-    piece.style.background = color;
-    piece.style.width = `${size}px`;
-    piece.style.height = `${size * 1.6}px`;
-    piece.style.animationDuration = `${duration}s`;
-    piece.style.animationDelay = `${delay}s`;
-    piece.style.setProperty('--confetti-drift', `${drift}px`);
-    piece.style.setProperty('--confetti-spin', `${spin}deg`);
-
-    const totalLifetime = (duration + delay) * 1000 + 100;
-    window.setTimeout(() => piece.remove(), totalLifetime);
-
-    fragment.appendChild(piece);
-  }
-
-  dom.confettiLayer.appendChild(fragment);
-}
-
-/* -----------------------------------------------------
-   8. LIGHT SYSTEM — Day/Night Toggle
------------------------------------------------------ */
-const LIGHT_PRESETS = {
-  day: {
-    sunColor: '#fff1d0',
-    ambientColor: 'rgba(255, 233, 184, 0.35)',
-    shadowColor: 'rgba(120, 90, 60, 0.22)',
-  },
-  night: {
-    sunColor: '#b9c4e8',
-    ambientColor: 'rgba(90, 100, 160, 0.35)',
-    shadowColor: 'rgba(20, 20, 45, 0.4)',
-  },
-};
-
-let currentLightMode = 'day';
-
-function applyLightMode(mode) {
-  const root = document.documentElement;
-  const preset = LIGHT_PRESETS[mode] || LIGHT_PRESETS.day;
-
-  root.style.setProperty('--light-progress', mode === 'night' ? '1' : '0');
-  root.style.setProperty('--sun-color', preset.sunColor);
-  root.style.setProperty('--ambient-color', preset.ambientColor);
-  root.style.setProperty('--shadow-color', preset.shadowColor);
-
-  document.body.classList.toggle('is-night', mode === 'night');
-
-  currentLightMode = mode;
-
-  updateCelestialToggleLabel();
-}
-
-function toggleLightMode() {
-  applyLightMode(currentLightMode === 'day' ? 'night' : 'day');
-}
-
-function initLightSystem() {
-  applyLightMode(CONFIG.environment.startMode);
-}
-
-/* -----------------------------------------------------
-   9. CELESTIAL TOGGLE
------------------------------------------------------ */
-function updateCelestialToggleLabel() {
-  if (!dom.celestialToggle) return;
-  dom.celestialToggle.setAttribute(
-    'aria-label',
-    currentLightMode === 'night' ? 'Switch to day view' : 'Switch to night view'
-  );
-}
-
-function initCelestialToggle() {
-  const btn = dom.celestialToggle;
-  if (!btn) return;
-
-  btn.addEventListener('click', () => {
-    toggleLightMode();
-  });
-
-  updateCelestialToggleLabel();
-}
-
-/* -----------------------------------------------------
-   10. EVENT LISTENERS
------------------------------------------------------ */
-function bindEvents() {
-  if (dom.startBtn) {
-    dom.startBtn.addEventListener('click', startCelebration);
-
-    dom.startBtn.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        startCelebration();
+      // 1. Twinkling Night Stars Layer
+      this.stars = [];
+      const starCount = Math.floor((w * h) / 11000); // Responsive density distribution
+      for (let i = 0; i < starCount; i++) {
+        this.stars.push({
+          x: Math.random() * w,
+          y: Math.random() * (h * 0.75), // Limit stars to higher sky regions
+          size: Math.random() * 1.5 + 0.3,
+          maxAlpha: Math.random() * 0.6 + 0.2,
+          alpha: Math.random(),
+          speed: Math.random() * 0.02 + 0.005
+        });
       }
-    });
-  }
-}
 
-/* -----------------------------------------------------
-   11. INIT — Runs once DOM is ready
------------------------------------------------------ */
-function init() {
-  applyPersonalization();
-  initParticles();
-  bindEvents();
-  initBirthdayCard();
-  initLightSystem();
-  initCelestialToggle();
-}
+      // 2. Wandering Ambient Fireflies
+      this.fireflies = [];
+      for (let i = 0; i < 24; i++) {
+        this.fireflies.push({
+          x: Math.random() * w,
+          y: h * 0.4 + Math.random() * (h * 0.55), // Ground focused
+          radius: Math.random() * 2 + 1.2,
+          alpha: Math.random() * 0.7 + 0.1,
+          pulseSpeed: Math.random() * 0.03 + 0.015,
+          angle: Math.random() * Math.PI * 2,
+          speed: Math.random() * 0.4 + 0.2,
+          wobble: Math.random() * 0.02 + 0.01
+        });
+      }
 
-document.addEventListener('DOMContentLoaded', init);
+      // 3. Floating Blush Pink Petals
+      this.petals = [];
+      for (let i = 0; i < 18; i++) {
+        this.petals.push({
+          x: Math.random() * w,
+          y: -20 - (Math.random() * h),
+          size: Math.random() * 8 + 4,
+          speedY: Math.random() * 0.7 + 0.4,
+          speedX: Math.random() * 0.3 - 0.15,
+          rotation: Math.random() * 360,
+          rotSpeed: Math.random() * 1.5 - 0.75,
+          swingAngle: Math.random() * Math.PI,
+          swingSpeed: Math.random() * 0.01 + 0.005
+        });
+      }
+    },
+
+    loop: function() {
+      if (!this.active) return;
+      const ctx = this.ctx;
+      const w = this.canvas.width;
+      const h = this.canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Render Layer 1: Twinkling Stars
+      for (let i = 0; i < this.stars.length; i++) {
+        const s = this.stars[i];
+        s.alpha += s.speed;
+        if (s.alpha > s.maxAlpha || s.alpha < 0.1) {
+          s.speed = -s.speed; // Invert bounce
+        }
+        ctx.fillStyle = `rgba(254, 253, 246, ${Math.max(0.1, Math.min(s.maxAlpha, s.alpha))})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Render Layer 2: Glowing Soft Gold Fireflies
+      for (let i = 0; i < this.fireflies.length; i++) {
+        const f = this.fireflies[i];
+        
+        // Organic random walk drift updates
+        f.angle += f.wobble;
+        f.x += Math.cos(f.angle) * f.speed;
+        f.y += Math.sin(f.angle) * (f.speed * 0.8) - 0.05; // Gentle upward float bias
+        
+        f.alpha += f.pulseSpeed;
+        if (f.alpha > 0.85 || f.alpha < 0.1) {
+          f.pulseSpeed = -f.pulseSpeed;
+        }
+
+        // Screen boundary looping
+        if (f.x < -20) f.x = w + 20;
+        if (f.x > w + 20) f.x = -20;
+        if (f.y < h * 0.25) f.y = h + 20;
+        if (f.y > h + 20) f.y = h * 0.4;
+
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius * 2.5, 0, Math.PI * 2);
+        const glow = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius * 2.5);
+        glow.addColorStop(0, `rgba(243, 210, 122, ${Math.max(0.1, f.alpha)})`);
+        glow.addColorStop(0.4, `rgba(251, 191, 36, ${f.alpha * 0.3})`);
+        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = glow;
+        ctx.fill();
+      }
+
+      // Render Layer 3: Drifting Blush Pink Petals
+      for (let i = 0; i < this.petals.length; i++) {
+        const p = this.petals[i];
+        p.y += p.speedY;
+        p.swingAngle += p.swingSpeed;
+        p.x += p.speedX + Math.sin(p.swingAngle) * 0.25;
+        p.rotation += p.rotSpeed;
+
+        if (p.y > h + 20 || p.x < -20 || p.x > w + 20) {
+          p.y = -20;
+          p.x = Math.random() * w;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        
+        ctx.beginPath();
+        // Handcrafted soft organic petal paths using bezier paths
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-p.size / 2, -p.size, p.size / 2, -p.size, 0, 0);
+        ctx.fillStyle = 'rgba(250, 225, 230, 0.7)'; // Blush pink base
+        ctx.fill();
+        
+        // Add subtle petal inner highlight shading
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-p.size / 4, -p.size * 0.8, p.size / 4, -p.size * 0.8, 0, 0);
+        ctx.fillStyle = 'rgba(251, 207, 232, 0.85)'; // Slightly darker rose petal spine
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      this.animationFrameId = requestAnimationFrame(() => this.loop());
+    }
+  };
+
+  // Application Logic Module
+  const App = {
+    init: function() {
+      this.initLoader();
+      this.initMobileMenu();
+      this.initDynamicYear();
+      this.setupResponsiveListeners();
+      this.initSceneControllers();
+    },
+
+    /**
+     * Initializes Loader overlay, binds Canvas Particle generation, 
+     * and schedules elegant transition out after 4 seconds
+     */
+    initLoader: function() {
+      const loaderOverlay = DOM.find('#premium-loader');
+      const loaderCanvas = DOM.find('#loader-particles');
+
+      if (!loaderOverlay) return;
+
+      // Start floating glow particles inside canvas
+      if (loaderCanvas) {
+        ParticleSystem.init(loaderCanvas);
+      }
+
+      // Schedule Fade Out (Approx. 4 Seconds cinematic hold)
+      setTimeout(() => {
+        loaderOverlay.classList.add('loader-fade-out');
+        loaderOverlay.setAttribute('aria-busy', 'false');
+
+        // Start immersive garden background canvas layers once overlay fades
+        const gardenCanvas = DOM.find('#garden-interactive-canvas');
+        if (gardenCanvas) {
+          GardenEffects.init(gardenCanvas);
+        }
+
+        // Cleanup loader resources once transition completes
+        setTimeout(() => {
+          ParticleSystem.stop();
+          loaderOverlay.remove(); // Safely remove element from dynamic DOM structure
+        }, 800); // Synchronized with --transition-cinematic timeline
+
+      }, 4200);
+    },
+
+    /**
+     * Set up UI controls to toggle interface layers to allow full screen focus
+     */
+    initSceneControllers: function() {
+      const viewToggle = DOM.find('#ui-visibility-toggle');
+      if (!viewToggle) return;
+
+      DOM.on(viewToggle, 'click', () => {
+        const body = document.body;
+        body.classList.toggle('dashboard-hidden');
+        
+        // Update textual/visual details inside toggle button
+        const isHidden = body.classList.contains('dashboard-hidden');
+        const txt = DOM.find('.toggle-text', viewToggle);
+        if (txt) {
+          txt.textContent = isHidden ? 'Show Interface' : 'Toggle View';
+        }
+      });
+    },
+
+    /**
+     * Initializes responsive toggle settings and accessibility properties for site header
+     */
+    initMobileMenu: function() {
+      const toggleBtn = DOM.find('.mobile-nav-toggle');
+      const navigation = DOM.find('.primary-navigation');
+
+      if (!toggleBtn || !navigation) return;
+
+      DOM.on(toggleBtn, 'click', () => {
+        const isOpen = toggleBtn.getAttribute('aria-expanded') === 'true';
+        
+        toggleBtn.setAttribute('aria-expanded', !isOpen);
+        navigation.classList.toggle('open', !isOpen);
+      });
+
+      // Close navigation automatically if background wrapper is selected or window resize happens
+      DOM.on(document, 'click', (e) => {
+        if (!toggleBtn.contains(e.target) && !navigation.contains(e.target)) {
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          navigation.classList.remove('open');
+        }
+      });
+    },
+
+    /**
+     * Updates copyright year tags within HTML elements automatically
+     */
+    initDynamicYear: function() {
+      const yearContainer = DOM.find('#current-year');
+      if (yearContainer) {
+        yearContainer.textContent = new Date().getFullYear();
+      }
+    },
+
+    /**
+     * Listens to interface layout properties to reset state context changes
+     */
+    setupResponsiveListeners: function() {
+      const toggleBtn = DOM.find('.mobile-nav-toggle');
+      const navigation = DOM.find('.primary-navigation');
+
+      if (!toggleBtn || !navigation) return;
+
+      const handleResize = throttle(() => {
+        if (window.innerWidth >= 768) {
+          // Revert ARIA states if returning to viewport structures without dynamic dropdowns
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          navigation.classList.remove('open');
+        }
+      }, 200);
+
+      DOM.on(window, 'resize', handleResize);
+    }
+  };
+
+  // Initialize once DOM tree completes processing
+  document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+  });
+
+})();
