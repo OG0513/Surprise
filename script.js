@@ -1,5 +1,5 @@
 /**
- * Cinematic Environment Engine (Version 2.2 Giant Realistic Moon)
+ * Cinematic Environment Engine (Version 2.3 Clustered Starfield & Lunar Warmth)
  * Namespace structure to manage lifecycle, states, and render threads.
  */
 
@@ -100,8 +100,7 @@ const GardenEngine = (() => {
 
   /**
    * Environment System (Version 1.3 Sub-System - Preserved)
-   * Renders a highly performance-optimized, slowly breathing atmospheric evening sky
-   * using offscreen bilinear scaling calculations to avoid color banding.
+   * Renders a highly performance-optimized, slowly breathing atmospheric evening sky.
    */
   const EnvironmentSystem = {
     name: 'EnvironmentSystem',
@@ -139,7 +138,6 @@ const GardenEngine = (() => {
 
       ctx.clearRect(0, 0, w, h);
 
-      // Base: Midnight Blue to Lavender-Purple twilight base gradient
       const baseGradient = ctx.createLinearGradient(0, 0, 0, h);
       baseGradient.addColorStop(0, 'hsla(230, 25%, 12%, 1)');
       baseGradient.addColorStop(0.5, 'hsla(260, 20%, 18%, 1)');
@@ -150,7 +148,6 @@ const GardenEngine = (() => {
       const driftX = Math.sin(this.ambientTime) * (w * 0.15);
       const driftY = Math.cos(this.ambientTime * 0.8) * (h * 0.08);
 
-      // Gradient 2: Glowing Soft Golden twilight center representing the warm horizon
       const horizonGlow = ctx.createRadialGradient(
         w * 0.5 + driftX,
         h * 0.85 + driftY,
@@ -165,7 +162,6 @@ const GardenEngine = (() => {
       ctx.fillStyle = horizonGlow;
       ctx.fillRect(0, 0, w, h);
 
-      // Gradient 3: Cool, ambient atmospheric light casting down from upper elements
       const upperAtmosphereGlow = ctx.createRadialGradient(
         w * 0.35 - driftX * 0.5,
         h * 0.2 + driftY * 0.5,
@@ -183,9 +179,8 @@ const GardenEngine = (() => {
   };
 
   /**
-   * Moon System (Version 2.2 Sub-System - Added)
-   * Procedurally generates a highly realistic, oversized lunar celestial body.
-   * Leverages offscreen caching to drawing surface textures only when resized.
+   * Moon System (Version 2.3 Refined)
+   * Manages the warm celestial moon coordinates, pre-rendered surfaces, and nested glow filters.
    */
   const MoonSystem = {
     name: 'MoonSystem',
@@ -194,14 +189,13 @@ const GardenEngine = (() => {
     offscreenCanvas: null,
     offscreenCtx: null,
     
-    // Dynamic coordinate properties
+    // Globally exposed coordinates (consumed by StarSystem for ambient illumination damping)
     centerX: 0,
     centerY: 0,
     radius: 0,
     
-    // Ambient breathing variables
     glowTime: 0,
-    glowSpeed: 0.6, // Very slow breathing speed
+    glowSpeed: 0.35, // Slower, highly realistic breathing sweep
 
     init(width, height, dpr) {
       this.canvas = document.getElementById('moon-canvas');
@@ -217,28 +211,23 @@ const GardenEngine = (() => {
     onResize(width, height, dpr) {
       if (!this.canvas) return;
 
-      // Ensure crisp high-DPI sizing for top-layer details
       this.canvas.width = width * dpr;
       this.canvas.height = height * dpr;
       this.ctx.scale(dpr, dpr);
 
-      // Procedural Positioning: upper-right quadrant, perfectly cinematic and non-centered
       const isMobile = width < 600;
       this.centerX = width * (isMobile ? 0.66 : 0.74);
       this.centerY = height * (isMobile ? 0.24 : 0.28);
       
-      // Proportional Oversized Radius (scales automatically between comfortable boundaries)
       const baseMeasurement = Math.min(width, height);
       this.radius = baseMeasurement * (isMobile ? 0.16 : 0.135);
-      this.radius = Math.max(Math.min(this.radius, 200), 55); // Clamp boundaries
+      this.radius = Math.max(Math.min(this.radius, 200), 55);
 
-      // Regenerate physical texture cache with new sizing dimensions
       this.preRenderLunarSurface();
     },
 
     /**
-     * Generates a fully detailed, high-fidelity procedural moon texture.
-     * Cached offscreen once during load or resize for maximum runtime loop optimization.
+     * Pre-renders the moon texture using ultra-soft, warm yellow-gold and cream properties.
      */
     preRenderLunarSurface() {
       const dpr = State.pixelRatio;
@@ -252,13 +241,12 @@ const GardenEngine = (() => {
 
       octx.clearRect(0, 0, size, size);
 
-      // Clip context to circular boundaries to protect moon rim blending
       octx.save();
       octx.beginPath();
       octx.arc(center, center, r, 0, Math.PI * 2);
       octx.clip();
 
-      // 1. Base Layer: Warm Celestial Gradients (Cream, Warm Beige, Soft Gold)
+      // 1. Base Layer: Natural Golden-Ivory Evening Full Moon
       const baseGrad = octx.createRadialGradient(
         center - r * 0.15,
         center - r * 0.15,
@@ -267,18 +255,18 @@ const GardenEngine = (() => {
         center,
         r
       );
-      baseGrad.addColorStop(0, 'hsla(38, 45%, 95%, 1)');       /* Warm Ivory Central Face */
-      baseGrad.addColorStop(0.45, 'hsla(33, 30%, 88%, 1)');    /* Warm Cream Mid-face */
-      baseGrad.addColorStop(0.82, 'hsla(43, 30%, 81%, 1)');    /* Soft Gold Horizon */
-      baseGrad.addColorStop(1, 'hsla(230, 8%, 68%, 1)');       /* Soft Cool Grey Edge Shadow */
+      baseGrad.addColorStop(0, 'hsla(38, 55%, 94%, 1)');       /* Warm Ivory */
+      baseGrad.addColorStop(0.45, 'hsla(35, 45%, 88%, 1)');    /* Warm Cream */
+      baseGrad.addColorStop(0.82, 'hsla(43, 50%, 82%, 1)');    /* Soft Gold tone */
+      baseGrad.addColorStop(1, 'hsla(30, 10%, 65%, 1)');       /* Warm shadow grey edge rim */
       octx.fillStyle = baseGrad;
       octx.beginPath();
       octx.arc(center, center, r, 0, Math.PI * 2);
       octx.fill();
 
-      // 2. Maria Plains (Subtle, large basaltic impact sheets using asymmetric transparent grey-blues)
-      octx.globalAlpha = 0.12;
-      octx.fillStyle = 'hsla(225, 12%, 35%, 1)';
+      // 2. Warm-toned Maria Basaltic plains
+      octx.globalAlpha = 0.11;
+      octx.fillStyle = 'hsla(25, 10%, 42%, 1)'; // Warm grey-brown maria
       const maria = [
         { x: center - r * 0.35, y: center - r * 0.25, r: r * 0.38 },
         { x: center - r * 0.15, y: center + r * 0.1, r: r * 0.28 },
@@ -290,15 +278,14 @@ const GardenEngine = (() => {
       maria.forEach(m => {
         octx.beginPath();
         octx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-        octx.filter = `blur(${r * 0.09}px)`; // Blurs paths smoothly into base color layers
+        octx.filter = `blur(${r * 0.09}px)`;
         octx.fill();
       });
       octx.filter = 'none';
       octx.globalAlpha = 1.0;
 
-      // 3. Procedural Craters (Creates indented 3D ridges using opposing light/shadow arcs)
-      // Generates a deterministic layout using mathematical PRNG to preserve texture on resize
-      let seed = 42;
+      // 3. Procedural Craters (Deterministic layout via PRNG)
+      let seed = 123;
       const seededRandom = () => {
         let x = Math.sin(seed++) * 10000;
         return x - Math.floor(x);
@@ -312,22 +299,21 @@ const GardenEngine = (() => {
           const cy = center + Math.sin(angle) * distance;
           const cr = r * seededRandom() * maxR;
 
-          // Drawing indented physical structure
           octx.save();
           octx.beginPath();
           octx.arc(cx, cy, cr, 0, Math.PI * 2);
           octx.clip();
 
-          // Left-Top Shadow Arc (indented pocket)
+          // Left-Top Shadow Arc (warm shadowed indent)
           octx.beginPath();
           octx.arc(cx - cr * 0.12, cy - cr * 0.12, cr, 0, Math.PI * 2);
-          octx.fillStyle = `rgba(30, 30, 45, ${shadowIntensity * 0.25})`;
+          octx.fillStyle = `rgba(50, 42, 35, ${shadowIntensity * 0.26})`;
           octx.fill();
 
-          // Right-Bottom Highlight Ridge (sunlit outer wall)
+          // Right-Bottom Highlight Ridge (Ivory edge)
           octx.beginPath();
           octx.arc(cx + cr * 0.1, cy + cr * 0.1, cr, 0, Math.PI * 2);
-          octx.strokeStyle = 'rgba(255, 252, 245, 0.4)';
+          octx.strokeStyle = 'rgba(253, 246, 226, 0.45)';
           octx.lineWidth = Math.max(cr * 0.08, 0.5);
           octx.stroke();
 
@@ -335,16 +321,13 @@ const GardenEngine = (() => {
         }
       };
 
-      // Layer 1: Medium sized distinct craters
       generateCraters(12, 0.08, 1.2);
-      // Layer 2: Micro craters for celestial realism
       generateCraters(60, 0.025, 0.9);
 
-      octx.restore(); // Restore master clip boundary
+      octx.restore();
     },
 
     update(dt) {
-      // breathing glow calculation cycle
       this.glowTime += this.glowSpeed * dt;
     },
 
@@ -356,44 +339,212 @@ const GardenEngine = (() => {
       const y = this.centerY;
       const r = this.radius;
 
-      // Clean canvas segment around current moon boundaries
       ctx.clearRect(0, 0, State.width, State.height);
 
-      // Compute slow, breathing atmospheric glow variations
-      const breathingOpacity = 0.09 + Math.sin(this.glowTime) * 0.025;
+      // Slower, almost imperceptible breathing coefficient (0.85 to 1.15)
+      const breath = 1.0 + Math.sin(this.glowTime) * 0.15;
 
-      // Draw layered volumetric ambient glows (gently diffuses lighting into night sky)
       ctx.globalCompositeOperation = 'screen';
       
-      // Outer Ambient Glow Layer
-      const outerGlow = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 3.5);
-      outerGlow.addColorStop(0, `hsla(43, 60%, 75%, ${breathingOpacity})`);
-      outerGlow.addColorStop(0.35, `hsla(350, 40%, 88%, ${breathingOpacity * 0.5})`);
+      // Layer 1: Extreme Atmospheric Glow (Broad diffusion)
+      const outerGlow = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 5.0);
+      outerGlow.addColorStop(0, `hsla(43, 50%, 75%, ${0.05 * breath})`);
+      outerGlow.addColorStop(0.4, `hsla(350, 40%, 88%, ${0.02 * breath})`);
       outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = outerGlow;
       ctx.beginPath();
-      ctx.arc(x, y, r * 3.5, 0, Math.PI * 2);
+      ctx.arc(x, y, r * 5.0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Core Intense Glow Layer
-      const coreGlow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 1.5);
-      coreGlow.addColorStop(0, `hsla(38, 50%, 94%, ${breathingOpacity * 1.5})`);
-      coreGlow.addColorStop(0.5, `hsla(43, 45%, 75%, ${breathingOpacity * 0.6})`);
+      // Layer 2: Medium Soft Ambient Glow
+      const ambientGlow = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 3.0);
+      ambientGlow.addColorStop(0, `hsla(43, 60%, 75%, ${0.09 * breath})`);
+      ambientGlow.addColorStop(0.5, `hsla(38, 50%, 94%, ${0.03 * breath})`);
+      ambientGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = ambientGlow;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 3.0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Layer 3: Intense Core Glow Halo (Smooth edge blend)
+      const coreGlow = ctx.createRadialGradient(x, y, r * 0.2, x, y, r * 1.5);
+      coreGlow.addColorStop(0, `hsla(38, 50%, 94%, ${0.18 * breath})`);
+      coreGlow.addColorStop(0.6, `hsla(43, 55%, 75%, ${0.06 * breath})`);
       coreGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = coreGlow;
       ctx.beginPath();
       ctx.arc(x, y, r * 1.5, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.globalCompositeOperation = 'source-over'; // Restore blend composition
+      ctx.globalCompositeOperation = 'source-over';
 
-      // Render cached realistic moon offscreen texture cleanly to high-DPI surface
       const size = r * 2;
       ctx.drawImage(
         this.offscreenCanvas,
         0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height,
         x - r, y - r, size, size
       );
+    }
+  };
+
+  /**
+   * Star System (Version 2.3 Sub-System - Added)
+   * Procedurally generates, clusters, and renders hundreds of organic, multi-depth stars.
+   * Dynamically attenuates (dims) stars based on their proximity to the moon's light glare.
+   */
+  const StarSystem = {
+    name: 'StarSystem',
+    canvas: null,
+    ctx: null,
+    stars: [],
+
+    init(width, height, dpr) {
+      this.canvas = document.getElementById('stars-canvas');
+      if (!this.canvas) return;
+
+      this.ctx = this.canvas.getContext('2d');
+      this.onResize(width, height, dpr);
+    },
+
+    onResize(width, height, dpr) {
+      if (!this.canvas) return;
+
+      this.canvas.width = width * dpr;
+      this.canvas.height = height * dpr;
+      this.ctx.scale(dpr, dpr);
+
+      this.generateStarfield(width, height);
+    },
+
+    /**
+     * Builds an organically distributed starfield.
+     * Uses a cluster-center algorithm to form gorgeous, natural cosmic spacing.
+     */
+    generateStarfield(width, height) {
+      this.stars = [];
+      const utils = GardenEngine.getUtils();
+
+      // Responsive Density Calculation (scales naturally based on viewport area)
+      const area = width * height;
+      const starCount = utils.clamp(Math.floor(area / 3200), 120, 500);
+
+      // Create 5 organic coordinate clusters (Constellation generators)
+      const clusters = [];
+      for (let c = 0; c < 5; c++) {
+        clusters.push({
+          x: utils.randomRange(width * 0.1, width * 0.9),
+          y: utils.randomRange(height * 0.1, height * 0.6)
+        });
+      }
+
+      for (let i = 0; i < starCount; i++) {
+        let sx, sy;
+
+        // 65% of stars spawn grouped near constellation centers; 35% are uniform
+        if (Math.random() < 0.65) {
+          const parent = clusters[Math.floor(Math.random() * clusters.length)];
+          // Gaussian offset distribution
+          const r = utils.randomRange(20, Math.min(width, height) * 0.25);
+          const theta = Math.random() * Math.PI * 2;
+          sx = parent.x + Math.cos(theta) * r;
+          sy = parent.y + Math.sin(theta) * r;
+        } else {
+          sx = utils.randomRange(0, width);
+          sy = utils.randomRange(0, height * 0.75); // Restrict stars mostly to upper portions
+        }
+
+        // Clip stars coordinates securely within viewport boundaries
+        sx = utils.clamp(sx, 1, width - 1);
+        sy = utils.clamp(sy, 1, height - 1);
+
+        // Multi-Depth Classification (0: Distant, 1: Medium, 2: Closer)
+        const depthRandom = Math.random();
+        let depth = 0;
+        let size = utils.randomRange(0.4, 0.75); // Most stars are tiny, distant points
+        let glow = 0;
+
+        if (depthRandom > 0.70 && depthRandom <= 0.94) {
+          depth = 1; // Medium distance
+          size = utils.randomRange(0.8, 1.25);
+        } else if (depthRandom > 0.94) {
+          depth = 2; // Closer, brighter points
+          size = utils.randomRange(1.3, 1.75);
+          glow = utils.randomRange(2, 4); // Extra luminous bloom
+        }
+
+        this.stars.push({
+          x: sx,
+          y: sy,
+          size: size,
+          depth: depth,
+          glow: glow,
+          baseOpacity: utils.randomRange(0.2, 0.7),
+          opacity: 0,
+          twinkleSpeed: utils.randomRange(0.6, 2.2),
+          twinklePhase: utils.randomRange(0, Math.PI * 2)
+        });
+      }
+    },
+
+    update(dt) {
+      const utils = GardenEngine.getUtils();
+
+      // Retrieve public moon state variables for distance glare attenuation calculations
+      const moonX = MoonSystem.centerX;
+      const moonY = MoonSystem.centerY;
+      const moonR = MoonSystem.radius;
+      const glareRadius = moonR * 3.8; // Proximity threshold for moonlight damping
+
+      for (let i = 0; i < this.stars.length; i++) {
+        const s = this.stars[i];
+
+        // 1. Twinkling Progression (Independent sinewaves)
+        s.twinklePhase += s.twinkleSpeed * dt;
+        let twinkleFactor = 0.6 + Math.sin(s.twinklePhase) * 0.4; // Ranges between 0.2 and 1.0
+        
+        let targetOpacity = s.baseOpacity * twinkleFactor;
+
+        // 2. Proximity Glare Attenuation (dim stars that are close to the moon)
+        if (moonR > 0) {
+          const dx = s.x - moonX;
+          const dy = s.y - moonY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < glareRadius) {
+            // Smooth step dampening curve (stars near the rim approach near 0 opacity)
+            const factor = utils.clamp((distance - moonR * 1.1) / (glareRadius - moonR * 1.1), 0.05, 1.0);
+            targetOpacity *= factor;
+          }
+        }
+
+        s.opacity = targetOpacity;
+      }
+    },
+
+    render() {
+      if (!this.ctx) return;
+
+      const ctx = this.ctx;
+      ctx.clearRect(0, 0, State.width, State.height);
+
+      for (let i = 0; i < this.stars.length; i++) {
+        const s = this.stars[i];
+        
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+
+        // Golden-ivory tones for nearby close stars; clear whites for background points
+        if (s.depth === 2) {
+          ctx.fillStyle = `rgba(253, 246, 226, ${s.opacity})`;
+          ctx.shadowColor = 'rgba(253, 246, 226, 0.5)';
+          ctx.shadowBlur = s.glow;
+        } else {
+          ctx.fillStyle = `rgba(240, 243, 255, ${s.opacity})`;
+        }
+
+        ctx.fill();
+        ctx.shadowBlur = 0; // Quick reset
+      }
     }
   };
 
@@ -578,7 +729,8 @@ const GardenEngine = (() => {
       // Register global systems
       this.registerSystem(LoadingSystem);
       this.registerSystem(EnvironmentSystem);
-      this.registerSystem(MoonSystem); // Version 2.2 Active
+      this.registerSystem(MoonSystem); 
+      this.registerSystem(StarSystem); // Version 2.3 Active
       
       AnimationManager.start();
 
